@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import Text from './Text';
 import { StyleSheet } from 'react-native';
 import { FIAT_ORDER_STATES } from '../../constants/on-ramp';
@@ -14,14 +13,16 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ConfirmedText = ({ testID, ...props }) => (
+interface StatusTextProps {
+  testID?: string;
+  [key: string]: any;
+}
+
+export const ConfirmedText: React.FC<StatusTextProps> = ({ testID, ...props }) => (
   <Text testID={testID} bold green style={styles.status} {...props} />
 );
-ConfirmedText.propTypes = {
-  testID: PropTypes.string,
-};
 
-export const PendingText = ({ testID, ...props }) => {
+export const PendingText: React.FC<StatusTextProps> = ({ testID, ...props }) => {
   const { colors } = useTheme();
   return (
     <Text
@@ -32,11 +33,8 @@ export const PendingText = ({ testID, ...props }) => {
     />
   );
 };
-PendingText.propTypes = {
-  testID: PropTypes.string,
-};
 
-export const FailedText = ({ testID, ...props }) => {
+export const FailedText: React.FC<StatusTextProps> = ({ testID, ...props }) => {
   const { colors } = useTheme();
   return (
     <Text
@@ -47,11 +45,15 @@ export const FailedText = ({ testID, ...props }) => {
     />
   );
 };
-FailedText.propTypes = {
-  testID: PropTypes.string,
-};
 
-function StatusText({ status, context, testID, ...props }) {
+interface StatusTextComponentProps {
+  status: string;
+  context?: string;
+  testID?: string;
+  [key: string]: any;
+}
+
+function StatusText({ status, context = 'transaction', testID, ...props }: StatusTextComponentProps) {
   switch (status) {
     case 'Confirmed':
     case 'confirmed':
@@ -104,15 +106,5 @@ function StatusText({ status, context, testID, ...props }) {
       );
   }
 }
-
-StatusText.defaultProps = {
-  context: 'transaction',
-};
-
-StatusText.propTypes = {
-  status: PropTypes.string.isRequired,
-  context: PropTypes.string,
-  testID: PropTypes.string,
-};
 
 export default StatusText;
