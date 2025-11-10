@@ -10,7 +10,6 @@ import {
   DevSettings,
   TextInput,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import { lastEventId as getLatestSentryId } from '@sentry/react-native';
 import {
   captureSentryFeedback,
@@ -46,7 +45,33 @@ import Button, {
   ButtonWidthTypes,
 } from '../../../component-library/components/Buttons/Button';
 
-const createStyles = (colors) =>
+interface FallbackProps {
+  errorMessage: string;
+  showExportSeedphrase: () => void;
+  copyErrorToClipboard: () => void;
+  sentryId?: string;
+  onboardingErrorConfig?: {
+    navigation: any;
+    error: Error;
+    view: string;
+  };
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  view: string;
+  navigation?: any;
+  metrics: any;
+  useOnboardingErrorHandling?: boolean;
+}
+
+interface ErrorBoundaryState {
+  error: Error | null;
+  sentryId?: string;
+  backupSeedphrase?: boolean;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -133,7 +158,7 @@ const createStyles = (colors) =>
     fullWidthButton: { flex: 1 },
   });
 
-export const Fallback = (props) => {
+export const Fallback: React.FC<FallbackProps> = (props) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [modalVisible, setModalVisible] = React.useState(false);
@@ -160,7 +185,7 @@ export const Fallback = (props) => {
     Alert.alert(strings('error_screen.bug_report_thanks'));
   };
 
-  const forceSentryReport = async (error) => {
+  const forceSentryReport = async (error: Error) => {
     try {
       await captureExceptionForced(error, {
         view: props.onboardingErrorConfig?.view || 'Unknown',
@@ -382,37 +407,17 @@ export const Fallback = (props) => {
   );
 };
 
-Fallback.propTypes = {
-  errorMessage: PropTypes.string,
-  showExportSeedphrase: PropTypes.func,
-  copyErrorToClipboard: PropTypes.func,
-  sentryId: PropTypes.string,
-  onboardingErrorConfig: PropTypes.shape({
-    navigation: PropTypes.object,
-    error: PropTypes.object,
-    view: PropTypes.string,
-  }),
-};
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-class ErrorBoundary extends Component {
-  state = { error: null };
+  state: ErrorBoundaryState = { error: null };
 
-  static propTypes = {
-    children: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.node),
-      PropTypes.node,
-    ]),
-    view: PropTypes.string.isRequired,
-    navigation: PropTypes.object,
-    metrics: PropTypes.object,
-    useOnboardingErrorHandling: PropTypes.bool,
-  };
-
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error) {
     return { error };
   }
 
-  generateErrorReport = (error, errorInfo = '') => {
+  generateErrorReport = (error: Error, errorInfo: string = '') => {
     const {
       view,
       metrics: { trackEvent, createEventBuilder },
@@ -432,7 +437,7 @@ class ErrorBoundary extends Component {
     );
   };
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Note: Sentry briefly removed this in the next version but eventually added it back in later versions.
     // Read more here - https://github.com/getsentry/sentry-javascript/issues/11951
     const sentryId = getLatestSentryId();
@@ -477,7 +482,7 @@ class ErrorBoundary extends Component {
     Linking.openURL(url);
   };
 
-  renderWithSafeArea = (children) => {
+  renderWithSafeArea = (children: React.ReactNode) => {
     const colors = this.context.colors || mockTheme.colors;
     const styles = createStyles(colors);
 
@@ -517,7 +522,5 @@ class ErrorBoundary extends Component {
       : this.props.children;
   }
 }
-
-ErrorBoundary.contextType = ThemeContext;
 
 export default withMetricsAwareness(ErrorBoundary);
