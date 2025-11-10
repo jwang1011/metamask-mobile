@@ -7,7 +7,6 @@ import {
   Linking,
   TouchableOpacity,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
@@ -21,7 +20,14 @@ import {
   ButtonWidthTypes,
 } from '../../../component-library/components/Buttons/Button/Button.types';
 
-const createStyles = (colors) =>
+interface PhishingModalProps {
+  fullUrl?: string;
+  continueToPhishingSite?: () => void;
+  goToFilePhishingIssue?: () => void;
+  goBackToSafety?: () => void;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     warningIcon: {
       color: colors.error.default,
@@ -97,28 +103,9 @@ const createStyles = (colors) =>
     },
   });
 
-export default class PhishingModal extends PureComponent {
-  static propTypes = {
-    /**
-     * name of the blacklisted url
-     */
-    fullUrl: PropTypes.string,
-    /**
-     * Called to the user decides to proceed to the phishing site
-     */
-    continueToPhishingSite: PropTypes.func,
-    /**
-     * Called to the user decides to report an issue
-     */
-    goToFilePhishingIssue: PropTypes.func,
-    /**
-     * Called when the user takes the recommended action
-     */
-    goBackToSafety: PropTypes.func,
-    /**
-     * Called to the user decides to share on Twitter
-     */
-  };
+export default class PhishingModal extends PureComponent<PhishingModalProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   shareToTwitter = () => {
     const tweetText =
@@ -136,7 +123,7 @@ export default class PhishingModal extends PureComponent {
   render() {
     const colors = this.context.colors || mockTheme.colors;
     const styles = createStyles(colors);
-    const urlObj = new URL(this.props.fullUrl);
+    const urlObj = new URL(this.props.fullUrl || '');
     const host = urlObj.hostname;
 
     return (
@@ -189,5 +176,3 @@ export default class PhishingModal extends PureComponent {
     );
   }
 }
-
-PhishingModal.contextType = ThemeContext;
