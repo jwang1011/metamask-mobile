@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   Platform,
   KeyboardAvoidingView,
@@ -314,44 +313,44 @@ const createStyles = (colors) =>
     },
   });
 
+interface ResetPasswordProps {
+  navigation: any;
+  passwordSet: () => void;
+  setLockTime: (time: number) => void;
+  selectedAddress: string;
+  route: any;
+  isSeedlessOnboardingLoginFlow: boolean;
+  authConnection: string;
+}
+
+interface ResetPasswordState {
+  isSelected: boolean;
+  password: string;
+  confirmPassword: string;
+  secureTextEntry: boolean;
+  biometryType: string | null;
+  biometryChoice: boolean;
+  rememberMe: boolean;
+  loading: boolean;
+  error: string | null;
+  inputWidth: { width: string };
+  view: string;
+  originalPassword: string | null;
+  ready: boolean;
+  showPasswordIndex: number[];
+  showPasswordChangeWarning: boolean;
+  passwordStrength?: number;
+  warningIncorrectPassword?: string;
+}
+
 /**
  * View where users can set their password for the first time
  */
-class ResetPassword extends PureComponent {
-  static propTypes = {
-    /**
-     * The navigator object
-     */
-    navigation: PropTypes.object,
-    /**
-     * The action to update the password set flag
-     * in the redux store
-     */
-    passwordSet: PropTypes.func,
-    /**
-     * The action to update the lock time
-     * in the redux store
-     */
-    setLockTime: PropTypes.func,
-    /**
-     * A string representing the selected address => account
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * A boolean representing if the user is in the seedless onboarding login flow
-     */
-    isSeedlessOnboardingLoginFlow: PropTypes.bool,
-    /**
-     * A string representing the auth connection type i.e. Apple or Google
-     */
-    authConnection: PropTypes.string,
-  };
+class ResetPassword extends PureComponent<ResetPasswordProps, ResetPasswordState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: ResetPasswordState = {
     isSelected: false,
     password: '',
     confirmPassword: '',
@@ -371,7 +370,7 @@ class ResetPassword extends PureComponent {
 
   mounted = true;
 
-  confirmPasswordInput = React.createRef();
+  confirmPasswordInput = React.createRef<any>();
 
   // Helper method to get theme colors
   getThemeColors = () => this.context.colors || mockTheme.colors;
@@ -444,7 +443,7 @@ class ResetPassword extends PureComponent {
     }, 100);
   }
 
-  componentDidUpdate(_, prevState) {
+  componentDidUpdate(_: ResetPasswordProps, prevState: ResetPasswordState) {
     this.updateNavBar();
     const prevLoading = prevState.loading;
     const { loading } = this.state;
@@ -588,7 +587,7 @@ class ResetPassword extends PureComponent {
     current && current.focus();
   };
 
-  updateBiometryChoice = async (biometryChoice) => {
+  updateBiometryChoice = async (biometryChoice: boolean) => {
     await updateAuthTypeStorageFlags(biometryChoice);
     this.setState({ biometryChoice });
   };
@@ -608,12 +607,12 @@ class ResetPassword extends PureComponent {
     );
   };
 
-  tryExportSeedPhrase = async (password) => {
+  tryExportSeedPhrase = async (password: string) => {
     const { KeyringController } = Engine.context;
     await KeyringController.exportSeedPhrase(password);
   };
 
-  tryUnlockWithPassword = async (password) => {
+  tryUnlockWithPassword = async (password: string) => {
     this.setState({ ready: false });
     try {
       // Just try
@@ -638,7 +637,7 @@ class ResetPassword extends PureComponent {
     this.tryUnlockWithPassword(password);
   };
 
-  onPasswordChange = (val) => {
+  onPasswordChange = (val: string) => {
     const passInfo = zxcvbn(val);
 
     this.setState((prevState) => ({
@@ -1073,17 +1072,15 @@ class ResetPassword extends PureComponent {
   }
 }
 
-ResetPassword.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: any) => ({
   selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
   isSeedlessOnboardingLoginFlow: selectSeedlessOnboardingLoginFlow(state),
   authConnection: selectSeedlessOnboardingAuthConnection(state),
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: any) => ({
   passwordSet: () => dispatch(passwordSet()),
-  setLockTime: (time) => dispatch(setLockTime(time)),
+  setLockTime: (time: number) => dispatch(setLockTime(time)),
   seedphraseNotBackedUp: () => dispatch(seedphraseNotBackedUp()),
 });
 
