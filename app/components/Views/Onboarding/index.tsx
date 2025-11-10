@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   ActivityIndicator,
   BackHandler,
@@ -63,7 +62,31 @@ import { SEEDLESS_ONBOARDING_ENABLED } from '../../../core/OAuthService/OAuthLog
 import { withMetricsAwareness } from '../../hooks/useMetrics';
 import ErrorBoundary from '../ErrorBoundary';
 
-const createStyles = (colors) =>
+interface OnboardingProps {
+  disableNewPrivacyPolicyToast: () => void;
+  navigation: any;
+  passwordSet: boolean;
+  loading: boolean;
+  setLoading: (msg?: string) => void;
+  unsetLoading: () => void;
+  existingUser: boolean;
+  saveOnboardingEvent: (...args: any[]) => void;
+  loadingMsg?: string;
+  route: any;
+  metrics: any;
+}
+
+interface OnboardingState {
+  warningModalVisible: boolean;
+  loading: boolean;
+  existingUser: boolean;
+  createWallet: boolean;
+  existingWallet: boolean;
+  errorSheetVisible: boolean;
+  errorToThrow: Error | null;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     scroll: {
       flex: 1,
@@ -220,59 +243,26 @@ const createStyles = (colors) =>
 /**
  * View that is displayed to first time (new) users
  */
-class Onboarding extends PureComponent {
-  static propTypes = {
-    disableNewPrivacyPolicyToast: PropTypes.func,
-    /**
-     * The navigator object
-     */
-    navigation: PropTypes.object,
-    /**
-     * redux flag that indicates if the user set a password
-     */
-    passwordSet: PropTypes.bool,
-    /**
-     * loading status
-     */
-    loading: PropTypes.bool,
-    /**
-     * set loading status
-     */
-    setLoading: PropTypes.func,
-    /**
-     * unset loading status
-     */
-    unsetLoading: PropTypes.func,
-    /**
-     * redux flag that indicates if the user is existing
-     */
-    existingUser: PropTypes.bool,
-    /**
-     * Action to save onboarding event
-     */
-    saveOnboardingEvent: PropTypes.func,
-    /**
-     * loadings msg
-     */
-    loadingMsg: PropTypes.string,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class Onboarding extends PureComponent<OnboardingProps, OnboardingState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
+
   notificationAnimated = new Animated.Value(100);
   detailsYAnimated = new Animated.Value(0);
   actionXAnimated = new Animated.Value(0);
   detailsAnimated = new Animated.Value(0);
 
-  onboardingTraceCtx = null;
-  socialLoginTraceCtx = null;
+  onboardingTraceCtx: any = null;
+  socialLoginTraceCtx: any = null;
+  seedwords: any = null;
+  importedAccounts: any = null;
+  channelName: any = null;
+  incomingDataStr: string = '';
+  dataToSync: any = null;
+  mounted: boolean = false;
+  warningCallback: () => boolean = () => true;
 
-  animatedTimingStart = (animatedRef, toValue) => {
+  animatedTimingStart = (animatedRef: Animated.Value, toValue: number) => {
     Animated.timing(animatedRef, {
       toValue,
       duration: 500,
@@ -281,7 +271,7 @@ class Onboarding extends PureComponent {
     }).start();
   };
 
-  state = {
+  state: OnboardingState = {
     warningModalVisible: false,
     loading: false,
     existingUser: false,
@@ -290,15 +280,6 @@ class Onboarding extends PureComponent {
     errorSheetVisible: false,
     errorToThrow: null,
   };
-
-  seedwords = null;
-  importedAccounts = null;
-  channelName = null;
-  incomingDataStr = '';
-  dataToSync = null;
-  mounted = false;
-
-  warningCallback = () => true;
 
   showNotification = () => {
     // show notification
@@ -383,7 +364,7 @@ class Onboarding extends PureComponent {
     }
   };
 
-  handleExistingUser = (action) => {
+  handleExistingUser = (action: () => void) => {
     if (this.state.existingUser) {
       this.alertExistingUser(action);
     } else {
@@ -441,7 +422,7 @@ class Onboarding extends PureComponent {
     this.handleExistingUser(action);
   };
 
-  handlePostSocialLogin = (result, createWallet, provider) => {
+  handlePostSocialLogin = (result: any, createWallet: boolean, provider: string) => {
     if (this.socialLoginTraceCtx) {
       endTrace({ name: TraceName.OnboardingSocialLoginAttempt });
       this.socialLoginTraceCtx = null;
@@ -498,7 +479,7 @@ class Onboarding extends PureComponent {
     }
   };
 
-  onPressContinueWithSocialLogin = async (createWallet, provider) => {
+  onPressContinueWithSocialLogin = async (createWallet: boolean, provider: string) => {
     this.props.navigation.navigate('Onboarding');
 
     if (createWallet) {
@@ -538,13 +519,13 @@ class Onboarding extends PureComponent {
     this.handleExistingUser(action);
   };
 
-  onPressContinueWithApple = async (createWallet) =>
+  onPressContinueWithApple = async (createWallet: boolean) =>
     this.onPressContinueWithSocialLogin(createWallet, 'apple');
 
-  onPressContinueWithGoogle = async (createWallet) =>
+  onPressContinueWithGoogle = async (createWallet: boolean) =>
     this.onPressContinueWithSocialLogin(createWallet, 'google');
 
-  handleLoginError = (error, socialConnectionType) => {
+  handleLoginError = (error: any, socialConnectionType: string) => {
     if (error instanceof OAuthError) {
       // For OAuth API failures (excluding user cancellation/dismissal), handle based on analytics consent
       if (
@@ -597,7 +578,7 @@ class Onboarding extends PureComponent {
     });
   };
 
-  handleOAuthLoginError = (error) => {
+  handleOAuthLoginError = (error: any) => {
     // If user has already consented to analytics, report error using regular Sentry
     if (this.props.metrics.isEnabled()) {
       captureException(error, {
@@ -614,7 +595,8 @@ class Onboarding extends PureComponent {
       });
     }
   };
-  track = (event, properties) => {
+  
+  track = (event: string, properties: any) => {
     trackOnboarding(
       MetricsEventBuilder.createEventBuilder(event)
         .addProperties(properties)
@@ -623,7 +605,7 @@ class Onboarding extends PureComponent {
     );
   };
 
-  alertExistingUser = (callback) => {
+  alertExistingUser = (callback: () => void) => {
     this.warningCallback = () => {
       callback();
       this.toggleWarningModal();
@@ -636,7 +618,7 @@ class Onboarding extends PureComponent {
     this.setState({ warningModalVisible: !warningModalVisible });
   };
 
-  handleCtaActions = (actionType) => {
+  handleCtaActions = (actionType: string) => {
     if (SEEDLESS_ONBOARDING_ENABLED) {
       this.props.navigation.navigate(Routes.MODAL.ROOT_MODAL_FLOW, {
         screen: Routes.SHEET.ONBOARDING_SHEET,
@@ -835,9 +817,7 @@ class Onboarding extends PureComponent {
   }
 }
 
-Onboarding.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: any) => ({
   accounts: selectAccounts(state),
   passwordSet: state.user.passwordSet,
   existingUser: selectExistingUser(state),
@@ -845,12 +825,12 @@ const mapStateToProps = (state) => ({
   loadingMsg: state.user.loadingMsg,
 });
 
-const mapDispatchToProps = (dispatch) => ({
-  setLoading: (msg) => dispatch(loadingSet(msg)),
+const mapDispatchToProps = (dispatch: any) => ({
+  setLoading: (msg?: string) => dispatch(loadingSet(msg)),
   unsetLoading: () => dispatch(loadingUnset()),
   disableNewPrivacyPolicyToast: () =>
     dispatch(storePrivacyPolicyClickedOrClosedAction()),
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
 });
 
 export default connect(
