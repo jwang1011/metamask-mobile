@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import {
   ScrollView,
   TouchableOpacity,
@@ -10,7 +10,6 @@ import {
   Image,
   Dimensions,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { fontStyles } from '../../../styles/common';
 import StyledButton from '../../UI/StyledButton';
@@ -36,7 +35,23 @@ const IMAGE_1_RATIO = 162.8 / 138;
 const DEVICE_WIDTH = Dimensions.get('window').width;
 const IMG_PADDING = Device.isIphoneX() ? 100 : Device.isIphone5S() ? 180 : 220;
 
-const createStyles = (colors) =>
+interface AccountBackupStep1BOwnProps {
+  navigation: any;
+  route: {
+    params?: any;
+  };
+}
+
+const mapDispatchToProps = (dispatch: any) => ({
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+});
+
+const connector = connect(null, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type AccountBackupStep1BProps = PropsFromRedux & AccountBackupStep1BOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     mainWrapper: {
       backgroundColor: colors.background.default,
@@ -202,14 +217,14 @@ const createStyles = (colors) =>
  * View that's shown during the first step of
  * the backup seed phrase flow
  */
-const AccountBackupStep1B = (props) => {
+const AccountBackupStep1B: React.FC<AccountBackupStep1BProps> = (props) => {
   const { navigation, route } = props;
   const [showWhySecureWalletModal, setWhySecureWalletModal] = useState(false);
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
   const headerLeft = useCallback(() => <View />, []);
-  const track = (event, properties) => {
+  const track = (event: any, properties?: any) => {
     const eventBuilder = MetricsEventBuilder.createEventBuilder(event);
     eventBuilder.addProperties(properties);
     trackOnboarding(eventBuilder.build(), props.saveOnboardingEvent);
@@ -402,23 +417,4 @@ const AccountBackupStep1B = (props) => {
   );
 };
 
-AccountBackupStep1B.propTypes = {
-  /**
-  /* navigation object required to push and pop other views
-  */
-  navigation: PropTypes.object,
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-  /**
-   * Action to save onboarding event
-   */
-  saveOnboardingEvent: PropTypes.func,
-};
-
-const mapDispatchToProps = (dispatch) => ({
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-});
-
-export default connect(null, mapDispatchToProps)(AccountBackupStep1B);
+export default connector(AccountBackupStep1B);
