@@ -1,5 +1,4 @@
 import { swapsUtils } from '@metamask/swaps-controller/';
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import {
   ActivityIndicator,
@@ -90,7 +89,38 @@ import {
 } from '../../../core/redux/slices/bridge';
 import { AVAILABLE_MULTICHAIN_NETWORK_CONFIGURATIONS } from '@metamask/multichain-network-controller';
 
-const createStyles = (colors) =>
+interface AssetProps {
+  navigation: any;
+  conversionRate: number;
+  currentCurrency: string;
+  selectedInternalAccount: any;
+  chainId: string;
+  transactions: any[];
+  tokens: any[];
+  swapsIsLive: boolean;
+  swapsTokens: any;
+  searchDiscoverySwapsTokens: any[];
+  swapsTransactions: any;
+  route: any;
+  rpcUrl: string;
+  networkConfigurations: any;
+  isNetworkRampSupported: boolean;
+  isNetworkBuyNativeTokenSupported: boolean;
+  isDepositEnabled: boolean;
+  setLiveness: (chainId: string, featureFlags: any) => void;
+  isUnifiedSwapsEnabled: boolean;
+}
+
+interface AssetState {
+  refreshing: boolean;
+  loading: boolean;
+  transactionsUpdated: boolean;
+  submittedTxs: any[];
+  confirmedTxs: any[];
+  transactions: any[];
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: colors.background.default,
@@ -148,67 +178,21 @@ const createStyles = (colors) =>
  * including the overview (Amount, Balance, Symbol, Logo)
  * and also the transaction list
  */
-class Asset extends PureComponent {
-  static propTypes = {
-    /**
-    /* navigation object required to access the props
-    /* passed by the parent component
-    */
-    navigation: PropTypes.object,
-    /**
-    /* conversion rate of ETH - FIAT
-    */
-    conversionRate: PropTypes.any,
-    /**
-    /* Selected currency
-    */
-    currentCurrency: PropTypes.string,
-    /**
-    /* InternalAccount object required to get account name
-    */
-    selectedInternalAccount: PropTypes.object,
-    /**
-     * The chain ID for the current selected network
-     */
-    chainId: PropTypes.string,
-    /**
-     * An array that represents the user transactions
-     */
-    transactions: PropTypes.array,
-    /**
-     * Array of ERC20 assets
-     */
-    tokens: PropTypes.array,
-    swapsIsLive: PropTypes.bool,
-    swapsTokens: PropTypes.object,
-    searchDiscoverySwapsTokens: PropTypes.array,
-    swapsTransactions: PropTypes.object,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    rpcUrl: PropTypes.string,
-    networkConfigurations: PropTypes.object,
-    /**
-     * Boolean that indicates if network is supported to buy
-     */
-    isNetworkRampSupported: PropTypes.bool,
-    /**
-     * Boolean that indicates if native token is supported to buy
-     */
-    isNetworkBuyNativeTokenSupported: PropTypes.bool,
-    /**
-     * Boolean that indicates if deposit functionality is enabled
-     */
-    isDepositEnabled: PropTypes.bool,
-    /**
-     * Function to set the swaps liveness
-     */
-    setLiveness: PropTypes.func,
-    isUnifiedSwapsEnabled: PropTypes.bool,
-  };
+class Asset extends PureComponent<AssetProps, AssetState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  txs: any[] = [];
+  txsPending: any[] = [];
+  isNormalizing: boolean = false;
+  chainId: string = '';
+  filter: any = undefined;
+  navSymbol: any = undefined;
+  navAddress: any = undefined;
+  selectedAddress: string;
+  mounted?: boolean;
+
+  state: AssetState = {
     refreshing: false,
     loading: false,
     transactionsUpdated: false,
@@ -217,18 +201,14 @@ class Asset extends PureComponent {
     transactions: [],
   };
 
-  txs = [];
-  txsPending = [];
-  isNormalizing = false;
-  chainId = '';
-  filter = undefined;
-  navSymbol = undefined;
-  navAddress = undefined;
-  selectedAddress = toChecksumHexAddress(
-    this.props.selectedInternalAccount?.address,
-  );
+  constructor(props: AssetProps) {
+    super(props);
+    this.selectedAddress = toChecksumHexAddress(
+      this.props.selectedInternalAccount?.address,
+    );
+  }
 
-  updateNavBar = (contentOffset = 0) => {
+  updateNavBar = (contentOffset: number = 0) => {
     const {
       route: { params },
       navigation,
@@ -275,11 +255,11 @@ class Asset extends PureComponent {
     );
   };
 
-  onScrollThroughContent = (contentOffset = 0) => {
+  onScrollThroughContent = (contentOffset: number = 0) => {
     this.updateNavBar(contentOffset);
   };
 
-  checkLiveness = async (chainId) => {
+  checkLiveness = async (chainId: string) => {
     try {
       const featureFlags = await swapsUtils.fetchSwapsFeatureFlags(
         getFeatureFlagChainId(chainId),
@@ -314,7 +294,7 @@ class Asset extends PureComponent {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: AssetProps) {
     if (
       prevProps.chainId !== this.props.chainId ||
       prevProps.selectedInternalAccount.address !==
@@ -336,10 +316,10 @@ class Asset extends PureComponent {
     this.mounted = false;
   }
 
-  didTxStatusesChange = (newTxsPending) =>
+  didTxStatusesChange = (newTxsPending: any[]) =>
     this.txsPending.length !== newTxsPending.length;
 
-  ethFilter = (tx) => {
+  ethFilter = (tx: any) => {
     const { networkId } = store.getState().inpageProvider;
     const { chainId } = this.props;
     const {
@@ -369,7 +349,7 @@ class Asset extends PureComponent {
     return false;
   };
 
-  noEthFilter = (tx) => {
+  noEthFilter = (tx: any) => {
     const { networkId } = store.getState().inpageProvider;
 
     const { chainId, swapsTransactions } = this.props;
@@ -677,12 +657,10 @@ class Asset extends PureComponent {
   };
 }
 
-Asset.contextType = ThemeContext;
+let cachedFilteredTransactions: any = null;
+let cacheKey: string | null = null;
 
-let cachedFilteredTransactions = null;
-let cacheKey = null;
-
-const mapStateToProps = (state, { route }) => {
+const mapStateToProps = (state: any, { route }: any) => {
   const selectedInternalAccount = selectSelectedInternalAccount(state);
   const evmTransactions = selectTransactions(state);
   const asset = route.params;
@@ -822,8 +800,8 @@ const mapStateToProps = (state, { route }) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-  setLiveness: (chainId, featureFlags) =>
+const mapDispatchToProps = (dispatch: any) => ({
+  setLiveness: (chainId: string, featureFlags: any) =>
     dispatch(setSwapsLiveness(chainId, featureFlags)),
 });
 
