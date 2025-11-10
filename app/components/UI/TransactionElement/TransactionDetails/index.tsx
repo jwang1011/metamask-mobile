@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { query } from '@metamask/controller-utils';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { fontStyles } from '../../../../styles/common';
 import { strings } from '../../../../../locales/i18n';
@@ -69,7 +68,60 @@ import {
 import { CHAIN_IDS } from '@metamask/transaction-controller';
 import TagBase from '../../../../component-library/base-components/TagBase';
 
-const createStyles = (colors) =>
+interface TransactionDetailsOwnProps {
+  navigation: any;
+  transactionObject: any;
+  transactionDetails: any;
+  close?: () => void;
+  showSpeedUpModal: () => void;
+  showCancelModal: () => void;
+}
+
+const mapStateToProps = (state: any, ownProps: TransactionDetailsOwnProps) => ({
+  chainId: selectChainId(state),
+  providerConfig: isPerDappSelectedNetworkEnabled()
+    ? selectProviderConfig(state)
+    : undefined,
+  networkConfigurations: selectNetworkConfigurations(state),
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  transactions: selectTransactions(state),
+  ticker: isPerDappSelectedNetworkEnabled()
+    ? selectTickerByChainId(state, ownProps.transactionObject.chainId)
+    : selectEvmTicker(state),
+  tokens: selectTokensByChainIdAndAddress(
+    state,
+    ownProps.transactionObject.chainId,
+  ),
+  contractExchangeRates: selectContractExchangeRatesByChainId(
+    state,
+    ownProps.transactionObject.chainId,
+  ),
+  conversionRate: selectConversionRateByChainId(
+    state,
+    ownProps.transactionObject.chainId,
+  ),
+  currentCurrency: selectCurrentCurrency(state),
+  primaryCurrency: selectPrimaryCurrency(state),
+  swapsTransactions: selectSwapsTransactions(state),
+  swapsTokens: swapsControllerTokens(state),
+  shouldUseSmartTransaction: selectShouldUseSmartTransaction(
+    state,
+    ownProps.transactionObject.chainId,
+  ),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TransactionDetailsProps = PropsFromRedux & TransactionDetailsOwnProps;
+
+interface TransactionDetailsState {
+  rpcBlockExplorer?: string;
+  renderTxActions: boolean;
+  updatedTransactionDetails?: any;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     viewOnEtherscan: {
       fontSize: 16,
@@ -122,61 +174,17 @@ const createStyles = (colors) =>
 /**
  * View that renders a transaction details as part of transactions list
  */
-class TransactionDetails extends PureComponent {
-  static propTypes = {
-    /**
-    /* navigation object required to push new views
-    */
-    navigation: PropTypes.object,
-    /**
-     * Chain ID string
-     */
-    chainId: PropTypes.string,
-    /**
-     * Object corresponding to a transaction, containing transaction object, networkId and transaction hash string
-     */
-    transactionObject: PropTypes.object,
-    /**
-     * Object with information to render
-     */
-    transactionDetails: PropTypes.object,
-    /**
-     * Network configurations
-     */
-    networkConfigurations: PropTypes.object,
-    /**
-     * Callback to close the view
-     */
-    close: PropTypes.func,
-    /**
-     * A string representing the network name
-     */
-    showSpeedUpModal: PropTypes.func,
-    showCancelModal: PropTypes.func,
-    selectedAddress: PropTypes.string,
-    transactions: PropTypes.array,
-    ticker: PropTypes.string,
-    tokens: PropTypes.object,
-    contractExchangeRates: PropTypes.object,
-    conversionRate: PropTypes.number,
-    currentCurrency: PropTypes.string,
-    swapsTransactions: PropTypes.object,
-    swapsTokens: PropTypes.array,
-    primaryCurrency: PropTypes.string,
+class TransactionDetails extends PureComponent<TransactionDetailsProps, TransactionDetailsState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-    /**
-     * Boolean that indicates if smart transaction should be used
-     */
-    shouldUseSmartTransaction: PropTypes.bool,
-  };
-
-  state = {
+  state: TransactionDetailsState = {
     rpcBlockExplorer: undefined,
     renderTxActions: true,
     updatedTransactionDetails: undefined,
   };
 
-  fetchTxReceipt = async (transactionHash) => {
+  fetchTxReceipt = async (transactionHash: string) => {
     const ethQuery = getGlobalEthQuery();
     return await query(ethQuery, 'getTransactionReceipt', [transactionHash]);
   };
@@ -188,7 +196,7 @@ class TransactionDetails extends PureComponent {
    * @param {Object} networkConfigurations - The network configurations object
    * @returns {string} The block explorer URL
    */
-  getBlockExplorerForChain = (chainId, txChainId, networkConfigurations) => {
+  getBlockExplorerForChain = (chainId: string, txChainId: string, networkConfigurations: any) => {
     // First check for network configuration block explorer
     let blockExplorer =
       networkConfigurations?.[txChainId]?.blockExplorerUrls[
@@ -540,39 +548,4 @@ class TransactionDetails extends PureComponent {
   };
 }
 
-const mapStateToProps = (state, ownProps) => ({
-  chainId: selectChainId(state),
-  providerConfig: isPerDappSelectedNetworkEnabled()
-    ? selectProviderConfig(state)
-    : undefined,
-  networkConfigurations: selectNetworkConfigurations(state),
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  transactions: selectTransactions(state),
-  ticker: isPerDappSelectedNetworkEnabled()
-    ? selectTickerByChainId(state, ownProps.transactionObject.chainId)
-    : selectEvmTicker(state),
-  tokens: selectTokensByChainIdAndAddress(
-    state,
-    ownProps.transactionObject.chainId,
-  ),
-  contractExchangeRates: selectContractExchangeRatesByChainId(
-    state,
-    ownProps.transactionObject.chainId,
-  ),
-  conversionRate: selectConversionRateByChainId(
-    state,
-    ownProps.transactionObject.chainId,
-  ),
-  currentCurrency: selectCurrentCurrency(state),
-  primaryCurrency: selectPrimaryCurrency(state),
-  swapsTransactions: selectSwapsTransactions(state),
-  swapsTokens: swapsControllerTokens(state),
-  shouldUseSmartTransaction: selectShouldUseSmartTransaction(
-    state,
-    ownProps.transactionObject.chainId,
-  ),
-});
-
-TransactionDetails.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(withNavigation(TransactionDetails));
+export default connector(withNavigation(TransactionDetails));
