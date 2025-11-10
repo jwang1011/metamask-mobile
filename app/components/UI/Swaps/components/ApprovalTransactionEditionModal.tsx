@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import Modal from 'react-native-modal';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { swapsUtils } from '@metamask/swaps-controller';
@@ -16,6 +15,28 @@ import { useTheme } from '../../../../util/theme';
 import Logger from '../../../../util/Logger';
 import { selectSwapsApprovalTransaction } from '../../../../reducers/swaps';
 
+interface ApprovalTransactionEditionModalOwnProps {
+  approvalTransaction?: any;
+  editQuoteTransactionsVisible?: boolean;
+  onCancelEditQuoteTransactions?: () => void;
+  setApprovalTransaction?: (tx: any) => void;
+  sourceToken: {
+    symbol: string;
+    decimals: number;
+  };
+  minimumSpendLimit: string;
+  chainId: string;
+}
+
+const mapStateToProps = (state: any) => ({
+  originalApprovalTransaction: selectSwapsApprovalTransaction(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ApprovalTransactionEditionModalProps = PropsFromRedux & ApprovalTransactionEditionModalOwnProps;
+
 const styles = StyleSheet.create({
   keyboardAwareWrapper: {
     flex: 1,
@@ -27,7 +48,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function ApprovalTransactionEditionModal({
+const ApprovalTransactionEditionModal: React.FC<ApprovalTransactionEditionModalProps> = ({
   originalApprovalTransaction,
   approvalTransaction,
   editQuoteTransactionsVisible,
@@ -36,7 +57,7 @@ function ApprovalTransactionEditionModal({
   sourceToken,
   minimumSpendLimit,
   chainId,
-}) {
+}) => {
   /* Approval transaction if any */
   const [customApprovalTransaction, setCustomApprovalTransaction] =
     useState(approvalTransaction);
@@ -49,7 +70,7 @@ function ApprovalTransactionEditionModal({
   const { colors } = useTheme();
 
   const onSpendLimitCustomValueChange = useCallback(
-    (approvalCustomValue) => setApprovalCustomValue(approvalCustomValue),
+    (approvalCustomValue: string) => setApprovalCustomValue(approvalCustomValue),
     [],
   );
 
@@ -151,21 +172,6 @@ function ApprovalTransactionEditionModal({
       </KeyboardAwareScrollView>
     </Modal>
   );
-}
-
-ApprovalTransactionEditionModal.propTypes = {
-  approvalTransaction: PropTypes.object,
-  originalApprovalTransaction: PropTypes.object,
-  editQuoteTransactionsVisible: PropTypes.bool,
-  minimumSpendLimit: PropTypes.string.isRequired,
-  onCancelEditQuoteTransactions: PropTypes.func,
-  setApprovalTransaction: PropTypes.func,
-  sourceToken: PropTypes.object,
-  chainId: PropTypes.string,
 };
 
-const mapStateToProps = (state) => ({
-  originalApprovalTransaction: selectSwapsApprovalTransaction(state),
-});
-
-export default connect(mapStateToProps)(ApprovalTransactionEditionModal);
+export default connector(ApprovalTransactionEditionModal);

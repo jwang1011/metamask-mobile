@@ -9,7 +9,6 @@ import Text, {
   TextVariant,
   TextColor,
 } from '../../../component-library/components/Texts/Text';
-import PropTypes from 'prop-types';
 import { useTheme } from '../../../util/theme';
 import generateTestId from '../../../../wdio/utils/generateTestId';
 import { SkipAccountSecurityModalSelectorsIDs } from '../../../../e2e/selectors/Onboarding/SkipAccountSecurityModal.selectors';
@@ -22,7 +21,16 @@ import Button, {
 } from '../../../component-library/components/Buttons/Button';
 import { useNavigation } from '@react-navigation/native';
 
-const createStyles = (colors) =>
+interface SkipAccountSecurityModalProps {
+  route?: {
+    params?: {
+      onConfirm?: () => void;
+      onCancel?: () => void;
+    };
+  };
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     imageWarning: {
       alignSelf: 'center',
@@ -69,7 +77,7 @@ const createStyles = (colors) =>
     },
   });
 
-const SkipAccountSecurityModal = ({ route }) => {
+const SkipAccountSecurityModal: React.FC<SkipAccountSecurityModalProps> = ({ route }) => {
   const sheetRef = useRef(null);
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -160,16 +168,5 @@ const SkipAccountSecurityModal = ({ route }) => {
     </BottomSheet>
   );
 };
-
-const propTypes = {
-  route: PropTypes.shape({
-    params: PropTypes.shape({
-      onConfirm: PropTypes.func,
-      onCancel: PropTypes.func,
-    }),
-  }),
-};
-
-SkipAccountSecurityModal.propTypes = propTypes;
 
 export default SkipAccountSecurityModal;
