@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, View, Text, InteractionManager } from 'react-native';
 import URL from 'url-parse';
 import { useSelector } from 'react-redux';
@@ -23,7 +22,24 @@ import { getDecimalChainId } from '../../../../../../util/networks';
 import { useMetrics } from '../../../../../../components/hooks/useMetrics';
 import Logger from '../../../../../../util/Logger';
 
-const createStyles = (colors) =>
+interface WatchAssetRequestProps {
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+  suggestedAssetMeta: {
+    asset: {
+      address: string;
+      symbol: string;
+      decimals: number;
+      standard?: string;
+    };
+    interactingAddress?: string;
+  };
+  currentPageInformation?: {
+    url?: string;
+  };
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     root: {
       backgroundColor: colors.background.default,
@@ -96,7 +112,7 @@ const createStyles = (colors) =>
     },
   });
 
-const WatchAssetRequest = ({
+const WatchAssetRequest: React.FC<WatchAssetRequestProps> = ({
   suggestedAssetMeta,
   currentPageInformation,
   onCancel,
