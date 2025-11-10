@@ -20,7 +20,6 @@ import {
 } from '../../../../../../actions/transaction';
 import { getSendFlowTitle } from '../../../../../UI/Navbar';
 import StyledButton from '../../../../../UI/StyledButton';
-import PropTypes from 'prop-types';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Modal from 'react-native-modal';
@@ -129,7 +128,7 @@ import { selectIsSwapsLive } from '../../../../../../core/redux/slices/bridge';
 
 const KEYBOARD_OFFSET = Device.isSmallDevice() ? 80 : 120;
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       flex: 1,
@@ -397,174 +396,69 @@ const createStyles = (colors) =>
     },
   });
 
+interface AmountProps {
+  accounts?: any;
+  collectibles?: any[];
+  collectibleContracts?: any[];
+  contractBalances?: any;
+  conversionRate?: number;
+  currentCurrency?: string;
+  contractExchangeRates?: any;
+  navigation: any;
+  route: any;
+  selectedAddress: string;
+  tokens?: any[];
+  ticker?: string;
+  setSelectedAsset: (asset: any) => void;
+  prepareTransaction: (transaction: any) => void;
+  primaryCurrency?: string;
+  selectedAsset?: any;
+  transactionState: any;
+  providerType?: string;
+  onConfirm?: () => void;
+  isPaymentRequest?: boolean;
+  resetTransaction: () => void;
+  isNetworkBuyNativeTokenSupported?: boolean;
+  swapsIsLive?: boolean;
+  globalChainId: string;
+  metrics: any;
+  gasFeeEstimates?: any;
+  gasEstimateType?: string;
+  setMaxValueMode: (mode: boolean) => void;
+  globalNetworkClientId: string;
+  isRedesignedTransferConfirmationEnabledForTransfer?: boolean;
+  contractBalancesByContextualChainId?: any;
+  contextualChainId: string;
+  allTokenBalances?: any;
+  accountsByContextualChainId?: any;
+  contextualNetworkConfiguration?: any;
+  contractExchangeRatesByContextualChainId?: any;
+  tickerByContextualChainId?: string;
+  allTokensByChainId?: any;
+  networkName?: string;
+  networkImageSource?: any;
+}
+
+interface AmountState {
+  amountError: string | undefined;
+  inputValue: string | undefined;
+  inputValueConversion: number | undefined;
+  displayableInputValueConversion: string | undefined;
+  assetsModalVisible: boolean;
+  internalPrimaryCurrencyIsCrypto: boolean;
+  estimatedTotalGas: string | undefined;
+  hasExchangeRate: boolean;
+  isRedesignedTransferTransactionLoading: boolean;
+}
+
 /**
  * View that wraps the wraps the "Send" screen
  */
-class Amount extends PureComponent {
-  static propTypes = {
-    /**
-     * Map of accounts to information objects including balances
-     */
-    accounts: PropTypes.object,
-    /**
-     * Array of collectible objects
-     */
-    collectibles: PropTypes.array,
-    /**
-     * An array that represents the user collectible contracts
-     */
-    collectibleContracts: PropTypes.array,
-    /**
-     * Object containing token balances in the format address => balance
-     */
-    contractBalances: PropTypes.object,
-    /**
-     * ETH to current currency conversion rate
-     */
-    conversionRate: PropTypes.number,
-    /**
-     * Currency code of the currently-active currency
-     */
-    currentCurrency: PropTypes.string,
-    /**
-     * Object containing token exchange rates in the format address => exchangeRate
-     */
-    contractExchangeRates: PropTypes.object,
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * Object that contains navigation props
-     */
-    route: PropTypes.object,
-    /**
-     * A string that represents the selected address
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * An array that represents the user tokens
-     */
-    tokens: PropTypes.array,
-    /**
-     * Current provider ticker
-     */
-    ticker: PropTypes.string,
-    /**
-     * Set selected in transaction state
-     */
-    setSelectedAsset: PropTypes.func,
-    /**
-     * Set transaction object to be sent
-     */
-    prepareTransaction: PropTypes.func,
-    /**
-     * Primary currency, either ETH or Fiat
-     */
-    primaryCurrency: PropTypes.string,
-    /**
-     * Selected asset from current transaction state
-     */
-    selectedAsset: PropTypes.object,
-    /**
-     * Current transaction state
-     */
-    transactionState: PropTypes.object,
-    /**
-     * Network provider type as mainnet
-     */
-    providerType: PropTypes.string,
-    /**
-     * function to call when the 'Next' button is clicked
-     */
-    onConfirm: PropTypes.func,
-    /**
-     * Indicates whether the current transaction is a deep link transaction
-     */
-    isPaymentRequest: PropTypes.bool,
-    /**
-     * Resets transaction state
-     */
-    resetTransaction: PropTypes.func,
-    /**
-     * Boolean that indicates if the network supports buy
-     */
-    isNetworkBuyNativeTokenSupported: PropTypes.bool,
-    /**
-     * Boolean that indicates if the swap is live
-     */
-    swapsIsLive: PropTypes.bool,
-    /**
-     * String that indicates the current chain id
-     */
-    globalChainId: PropTypes.string,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-    /**
-     * Gas fee estimates for the transaction.
-     */
-    gasFeeEstimates: PropTypes.object,
-    /**
-     * Type of gas fee estimate provided by the gas fee controller.
-     */
-    gasEstimateType: PropTypes.string,
-    /**
-     * Function that sets the max value mode
-     */
-    setMaxValueMode: PropTypes.func,
-    /**
-     * Network client id
-     */
-    globalNetworkClientId: PropTypes.string,
-    /**
-     * Boolean that indicates if the redesigned transfer confirmation is enabled
-     */
-    isRedesignedTransferConfirmationEnabledForTransfer: PropTypes.bool,
-    /**
-     * Object containing token balances in the format address => balance by contextual chain id
-     */
-    contractBalancesByContextualChainId: PropTypes.object,
-    /**
-     * Send flow contextual chain id
-     */
-    contextualChainId: PropTypes.string,
-    /**
-     * All token balances
-     */
-    allTokenBalances: PropTypes.object,
-    /**
-     * Accounts by contextual chain id
-     */
-    accountsByContextualChainId: PropTypes.object,
-    /**
-     * Send flow contextual network configuration
-     */
-    contextualNetworkConfiguration: PropTypes.object,
-    /**
-     * Object containing token exchange rates in the format address => exchangeRate by contextual chain id
-     */
-    contractExchangeRatesByContextualChainId: PropTypes.object,
-    /**
-     * Current provider ticker by contextual chain id
-     */
-    tickerByContextualChainId: PropTypes.string,
-    /**
-     * All tokens by chain id
-     */
-    allTokensByChainId: PropTypes.object,
-    /**
-     * Network name
-     */
-    networkName: PropTypes.string,
-    /**
-     * Network image source
-     */
-    networkImageSource: PropTypes.object,
-  };
+class Amount extends PureComponent<AmountProps, AmountState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: AmountState = {
     amountError: undefined,
     inputValue: undefined,
     inputValueConversion: undefined,
@@ -576,9 +470,9 @@ class Amount extends PureComponent {
     isRedesignedTransferTransactionLoading: false,
   };
 
-  amountInput = React.createRef();
-  tokens = [];
-  collectibles = [];
+  amountInput = React.createRef<TextInput>();
+  tokens: any[] = [];
+  collectibles: any[] = [];
 
   updateNavBar = () => {
     const { navigation, route, resetTransaction } = this.props;
@@ -1887,16 +1781,16 @@ const mapStateToProps = (state, ownProps) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-  prepareTransaction: (transaction) =>
+const mapDispatchToProps = (dispatch: any) => ({
+  prepareTransaction: (transaction: any) =>
     dispatch(prepareTransaction(transaction)),
-  setSelectedAsset: (selectedAsset) =>
+  setSelectedAsset: (selectedAsset: any) =>
     dispatch(setSelectedAsset(selectedAsset)),
   resetTransaction: () => {
     dispatch(setTransactionSendFlowContextualChainId(null));
     dispatch(resetTransaction());
   },
-  setMaxValueMode: (maxValueMode) => dispatch(setMaxValueMode(maxValueMode)),
+  setMaxValueMode: (maxValueMode: boolean) => dispatch(setMaxValueMode(maxValueMode)),
 });
 
 export default connect(
