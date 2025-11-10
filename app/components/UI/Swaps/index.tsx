@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import PropTypes from 'prop-types';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -187,6 +186,24 @@ const SWAPS_NATIVE_ADDRESS = swapsUtils.NATIVE_SWAPS_TOKEN_ADDRESS;
 const TOKEN_MINIMUM_SOURCES = 1;
 const MAX_TOP_ASSETS = 20;
 
+interface SwapsAmountViewProps {
+  swapsTokens: any[];
+  swapsControllerTokens: any;
+  accountsByChainId: any;
+  selectedAddress: string;
+  chainId: string;
+  selectedNetworkClientId: string;
+  networkConfigurations: any;
+  balances: any;
+  tokensWithBalance: any[];
+  tokensTopAssets: any[];
+  conversionRate: number;
+  tokenExchangeRates: any;
+  currentCurrency: string;
+  setLiveness: (chainId: string, featureFlags: any) => void;
+  shouldUseSmartTransaction: boolean;
+}
+
 function SwapsAmountView({
   swapsTokens,
   swapsControllerTokens,
@@ -203,7 +220,7 @@ function SwapsAmountView({
   currentCurrency,
   setLiveness,
   shouldUseSmartTransaction,
-}) {
+}: SwapsAmountViewProps) {
   const accounts = accountsByChainId[chainId];
   const navigation = useNavigation();
   const route = useRoute();
@@ -211,7 +228,7 @@ function SwapsAmountView({
   const { trackEvent, createEventBuilder } = useMetrics();
   const styles = createStyles(colors);
 
-  const previousSelectedAddress = useRef();
+  const previousSelectedAddress = useRef<string>();
 
   // Use the new hook for chain redirection
   ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
@@ -222,26 +239,26 @@ function SwapsAmountView({
   const initialSource = route.params?.sourceToken ?? SWAPS_NATIVE_ADDRESS;
   const initialDestination = route.params?.destinationToken;
 
-  const [amount, setAmount] = useState('0');
-  const [slippage, setSlippage] = useState(AppConstants.SWAPS.DEFAULT_SLIPPAGE);
-  const [isInitialLoadingTokens, setInitialLoadingTokens] = useState(false);
-  const [, setLoadingTokens] = useState(false);
-  const [isSourceSet, setIsSourceSet] = useState(() =>
+  const [amount, setAmount] = useState<string>('0');
+  const [slippage, setSlippage] = useState<number>(AppConstants.SWAPS.DEFAULT_SLIPPAGE);
+  const [isInitialLoadingTokens, setInitialLoadingTokens] = useState<boolean>(false);
+  const [, setLoadingTokens] = useState<boolean>(false);
+  const [isSourceSet, setIsSourceSet] = useState<boolean>(() =>
     Boolean(
-      swapsTokens?.find((token) =>
+      swapsTokens?.find((token: any) =>
         areAddressesEqual(token.address, initialSource),
       ),
     ),
   );
-  const [isDestinationSet, setIsDestinationSet] = useState(false);
+  const [isDestinationSet, setIsDestinationSet] = useState<boolean>(false);
 
-  const [sourceToken, setSourceToken] = useState(() =>
-    swapsTokens?.find((token) =>
+  const [sourceToken, setSourceToken] = useState<any>(() =>
+    swapsTokens?.find((token: any) =>
       areAddressesEqual(token.address, initialSource),
     ),
   );
-  const [destinationToken, setDestinationToken] = useState(
-    swapsTokens?.find((token) =>
+  const [destinationToken, setDestinationToken] = useState<any>(
+    swapsTokens?.find((token: any) =>
       areAddressesEqual(token.address, initialDestination),
     ),
   );
@@ -253,12 +270,12 @@ function SwapsAmountView({
     setSlippage,
   });
 
-  const [hasDismissedTokenAlert, setHasDismissedTokenAlert] = useState(true);
-  const [contractBalance, setContractBalance] = useState(null);
-  const [contractBalanceAsUnits, setContractBalanceAsUnits] = useState(
+  const [hasDismissedTokenAlert, setHasDismissedTokenAlert] = useState<boolean>(true);
+  const [contractBalance, setContractBalance] = useState<string | null>(null);
+  const [contractBalanceAsUnits, setContractBalanceAsUnits] = useState<any>(
     safeNumberToBN(0),
   );
-  const [isDirectWrapping, setIsDirectWrapping] = useState(false);
+  const [isDirectWrapping, setIsDirectWrapping] = useState<boolean>(false);
 
   const [isSourceModalVisible, toggleSourceModal] = useModalHandler(false);
   const [isDestinationModalVisible, toggleDestinationModal] =
@@ -315,7 +332,7 @@ function SwapsAmountView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSource, chainId, navigation, setLiveness]);
 
-  const keypadViewRef = useRef(null);
+  const keypadViewRef = useRef<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -596,7 +613,7 @@ function SwapsAmountView({
 
   /* Keypad Handlers */
   const handleKeypadChange = useCallback(
-    ({ value }) => {
+    ({ value }: { value: string }) => {
       if (value === amount) {
         return;
       }
@@ -607,7 +624,7 @@ function SwapsAmountView({
   );
 
   const setSlippageAfterTokenPress = useCallback(
-    (sourceTokenAddress, destinationTokenAddress) => {
+    (sourceTokenAddress: string, destinationTokenAddress: string) => {
       const enableDirectWrapping = swapsUtils.shouldEnableDirectWrapping(
         chainId,
         sourceTokenAddress,
@@ -1064,8 +1081,8 @@ const mapStateToProps = (state) => ({
   ),
 });
 
-const mapDispatchToProps = (dispatch) => ({
-  setLiveness: (chainId, featureFlags) =>
+const mapDispatchToProps = (dispatch: any) => ({
+  setLiveness: (chainId: string, featureFlags: any) =>
     dispatch(setSwapsLiveness(chainId, featureFlags)),
 });
 
