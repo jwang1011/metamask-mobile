@@ -1,15 +1,14 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import Modal from 'react-native-modal';
 import { StyleSheet, View, Text } from 'react-native';
 import { dismissAlert } from '../../../actions/alert';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { fontStyles } from '../../../styles/common';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import ElevatedView from 'react-native-elevated-view';
 import { ThemeContext, mockTheme } from '../../../util/theme';
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     modal: {
       margin: 0,
@@ -36,39 +35,34 @@ const createStyles = (colors) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  isVisible: state.alert.isVisible,
+  autodismiss: state.alert.autodismiss,
+  content: state.alert.content,
+  data: state.alert.data,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  dismissAlert: () => dispatch(dismissAlert()),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
 /**
  * Wrapper component for a global alert
  * connected to redux
  */
-class GlobalAlert extends PureComponent {
-  static propTypes = {
-    /**
-     * Boolean that determines if the modal should be shown
-     */
-    isVisible: PropTypes.bool.isRequired,
-    /**
-     * Number that determines when it should be autodismissed (in miliseconds)
-     */
-    autodismiss: PropTypes.number,
-    /**
-     * Children component(s)
-     */
-    content: PropTypes.any,
-    /**
-     * Object with data required to render the content
-     */
-    data: PropTypes.object,
-    /**
-     * function that dismisses de modal
-     */
-    dismissAlert: PropTypes.func,
-  };
+class GlobalAlert extends PureComponent<PropsFromRedux> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   onClose = () => {
     this.props.dismissAlert();
   };
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: PropsFromRedux) {
     if (
       this.props.autodismiss &&
       !isNaN(this.props.autodismiss) &&
@@ -81,7 +75,7 @@ class GlobalAlert extends PureComponent {
     }
   }
 
-  getComponent(content) {
+  getComponent(content: any) {
     switch (content) {
       case 'clipboard-alert':
         return this.renderClipboardAlert();
@@ -97,7 +91,7 @@ class GlobalAlert extends PureComponent {
 
   renderClipboardAlert = () => {
     const colors = this.context.colors || mockTheme.colors;
-    const styles = this.getStyles(colors);
+    const styles = this.getStyles();
 
     return (
       <ElevatedView
@@ -121,7 +115,7 @@ class GlobalAlert extends PureComponent {
   render = () => {
     const { content, isVisible } = this.props;
     const colors = this.context.colors || mockTheme.colors;
-    const styles = this.getStyles(colors);
+    const styles = this.getStyles();
 
     return (
       <Modal
@@ -140,17 +134,4 @@ class GlobalAlert extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  isVisible: state.alert.isVisible,
-  autodismiss: state.alert.autodismiss,
-  content: state.alert.content,
-  data: state.alert.data,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  dismissAlert: () => dispatch(dismissAlert()),
-});
-
-GlobalAlert.contextType = ThemeContext;
-
-export default connect(mapStateToProps, mapDispatchToProps)(GlobalAlert);
+export default connector(GlobalAlert);

@@ -1,12 +1,15 @@
 import React, { PureComponent } from 'react';
-import { View, StyleSheet, Text, Platform } from 'react-native';
-import PropTypes from 'prop-types';
+import { View, StyleSheet, Text, Platform, StyleProp, ViewStyle } from 'react-native';
 import { fontStyles } from '../../../../styles/common';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { ThemeContext, mockTheme } from '../../../../util/theme';
 import { BrowserViewSelectorsIDs } from '../../../../../e2e/selectors/Browser/BrowserView.selectors';
 
-const createStyles = (colors) =>
+interface TabCountIconOwnProps {
+  style?: StyleProp<ViewStyle>;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     tabIcon: {
       borderWidth: 2,
@@ -25,21 +28,22 @@ const createStyles = (colors) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  tabCount: state.browser.tabs.length,
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TabCountIconProps = PropsFromRedux & TabCountIconOwnProps;
+
 /**
  * PureComponent that renders an icon showing
  * the current number of open tabs
  */
-class TabCountIcon extends PureComponent {
-  static propTypes = {
-    /**
-     * Switches to a specific tab
-     */
-    tabCount: PropTypes.number,
-    /**
-     * PureComponent styles
-     */
-    style: PropTypes.any,
-  };
+class TabCountIcon extends PureComponent<TabCountIconProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   render() {
     const { tabCount, style } = this.props;
@@ -59,10 +63,4 @@ class TabCountIcon extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  tabCount: state.browser.tabs.length,
-});
-
-TabCountIcon.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(TabCountIcon);
+export default connector(TabCountIcon);
