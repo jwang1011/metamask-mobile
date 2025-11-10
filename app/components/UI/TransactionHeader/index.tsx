@@ -1,8 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, View, Text } from 'react-native';
 import { fontStyles } from '../../../styles/common';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import WebsiteIcon from '../WebsiteIcon';
 import { getHost, getUrlObj } from '../../../util/browser';
 import networkList from '../../../util/networks';
@@ -20,7 +19,17 @@ import { TransactionReviewSelectorsIDs } from '../../../../e2e/selectors/SendFlo
 
 const { ORIGIN_DEEPLINK, ORIGIN_QR_CODE } = AppConstants.DEEPLINKS;
 
-const createStyles = (colors) =>
+interface TransactionHeaderOwnProps {
+  currentPageInformation: {
+    origin?: string;
+    url?: string;
+    currentEnsName?: string;
+    icon?: string | { uri: string };
+    spenderAddress?: string;
+  };
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     transactionHeader: {
       justifyContent: 'center',
@@ -83,10 +92,20 @@ const createStyles = (colors) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  networkType: selectProviderType(state),
+  nickname: selectNickname(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TransactionHeaderProps = PropsFromRedux & TransactionHeaderOwnProps;
+
 /**
  * PureComponent that renders the transaction header used for signing, granting permissions and sending
  */
-const TransactionHeader = (props) => {
+const TransactionHeader: React.FC<TransactionHeaderProps> = (props) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -225,24 +244,4 @@ const TransactionHeader = (props) => {
   );
 };
 
-TransactionHeader.propTypes = {
-  /**
-   * Object containing current page title and url
-   */
-  currentPageInformation: PropTypes.object,
-  /**
-   * String representing the selected network
-   */
-  networkType: PropTypes.string,
-  /**
-   * Provider name
-   */
-  nickname: PropTypes.string,
-};
-
-const mapStateToProps = (state) => ({
-  networkType: selectProviderType(state),
-  nickname: selectNickname(state),
-});
-
-export default connect(mapStateToProps)(TransactionHeader);
+export default connector(TransactionHeader);
