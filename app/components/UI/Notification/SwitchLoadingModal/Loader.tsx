@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import PropTypes from 'prop-types';
 import Device from '../../../../util/device';
 import { useTheme } from '../../../../util/theme';
 import Text, {
@@ -20,6 +19,12 @@ import Button, {
 } from '../../../../component-library/components/Buttons/Button';
 import { strings } from '../../../../../locales/i18n';
 import type { ThemeColors } from '@metamask/design-tokens';
+
+interface LoaderProps {
+  loadingText: string;
+  onDismiss: () => void;
+  errorText?: string;
+}
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
@@ -47,14 +52,10 @@ const createStyles = (colors: ThemeColors) =>
     },
   });
 
-const Loader = ({
+const Loader: React.FC<LoaderProps> = ({
   loadingText,
   onDismiss,
   errorText,
-}: {
-  loadingText: string;
-  onDismiss: () => void;
-  errorText?: string;
 }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -89,10 +90,6 @@ const Loader = ({
       )}
     </View>
   );
-};
-
-Loader.propTypes = {
-  loadingText: PropTypes.string,
 };
 
 export default Loader;
