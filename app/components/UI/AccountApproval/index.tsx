@@ -1,7 +1,6 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { InteractionManager, TouchableOpacity, View } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { strings } from '../../../../locales/i18n';
 import Text from '../../../component-library/components/Texts/Text';
 import NotificationManager from '../../../core/NotificationManager';
@@ -36,59 +35,62 @@ import createStyles from './styles';
 import { SourceType } from '../../hooks/useMetrics/useMetrics.types';
 import { MetricsEventBuilder } from '../../../core/Analytics/MetricsEventBuilder';
 import { getPhishingTestResultAsync } from '../../../util/phishingDetection';
+
+interface AccountApprovalOwnProps {
+  currentPageInformation: {
+    title?: string;
+    url?: string;
+    icon?: string;
+    otps?: string[];
+    origin?: string;
+    reconnect?: boolean;
+    apiVersion?: string;
+    channelId?: string;
+    analytics?: {
+      source?: string;
+      [key: string]: any;
+    };
+  };
+  onConfirm: () => void;
+  onCancel: () => void;
+  navigation: any;
+  walletConnectRequest?: boolean;
+  metrics: any;
+}
+
+const mapStateToProps = (state: any) => ({
+  accountsLength: selectAccountsLength(state),
+  tokensLength: selectTokensLength(state),
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  networkType: selectProviderType(state),
+  chainId: selectEvmChainId(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type AccountApprovalProps = PropsFromRedux & AccountApprovalOwnProps;
+
+interface AccountApprovalState {
+  start: number;
+  confirmDisabled: boolean;
+  otpChoice?: string;
+  noPersist: boolean;
+  otps: string[];
+  otp: boolean;
+  isUrlFlaggedAsPhishing: boolean;
+}
+
 /**
  * Account access approval component
  */
-class AccountApproval extends PureComponent {
-  static propTypes = {
-    /**
-     * Object containing current page title, url, and icon href
-     */
-    currentPageInformation: PropTypes.object,
-    /**
-     * Callback triggered on account access approval
-     */
-    onConfirm: PropTypes.func,
-    /**
-     * Callback triggered on account access rejection
-     */
-    onCancel: PropTypes.func,
-    /**
-     * A string that represents the selected address
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * Number of tokens
-     */
-    tokensLength: PropTypes.number,
-    /**
-    /* navigation object required to access the props
-    /* passed by the parent component
-    */
-    navigation: PropTypes.object,
-    /**
-     * Number of accounts
-     */
-    accountsLength: PropTypes.number,
-    /**
-     * A string representing the network name
-     */
-    networkType: PropTypes.string,
-    /**
-     * Whether it was a request coming through wallet connect
-     */
-    walletConnectRequest: PropTypes.bool,
-    /**
-     * A string representing the network chainId
-     */
-    chainId: PropTypes.string,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class AccountApproval extends PureComponent<AccountApprovalProps, AccountApprovalState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  _isMounted?: boolean;
+
+  state: AccountApprovalState = {
     start: Date.now(),
     confirmDisabled: true,
     otpChoice: undefined,
@@ -175,7 +177,7 @@ class AccountApproval extends PureComponent {
     this._isMounted = false;
   };
 
-  showWalletConnectNotification = (confirmation = false) => {
+  showWalletConnectNotification = (confirmation: boolean = false) => {
     if (this.props.walletConnectRequest) {
       const title = this.props.currentPageInformation.title;
       InteractionManager.runAfterInteractions(() => {
@@ -283,14 +285,14 @@ class AccountApproval extends PureComponent {
     };
   };
 
-  onOTP = (value) => {
+  onOTP = (value: string) => {
     this.setState({
       otpChoice: value,
       confirmDisabled: false,
     });
   };
 
-  checkUrlFlaggedAsPhishing = async (hostname) => {
+  checkUrlFlaggedAsPhishing = async (hostname: string) => {
     const scanResult = await getPhishingTestResultAsync(hostname);
     if (this._isMounted) {
       this.setState({
@@ -412,14 +414,4 @@ class AccountApproval extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  accountsLength: selectAccountsLength(state),
-  tokensLength: selectTokensLength(state),
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  networkType: selectProviderType(state),
-  chainId: selectEvmChainId(state),
-});
-
-AccountApproval.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(withMetricsAwareness(AccountApproval));
+export default connector(withMetricsAwareness(AccountApproval));
