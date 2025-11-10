@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import {
   InteractionManager,
@@ -8,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { strings } from '../../../../locales/i18n';
 import { WalletViewSelectorsIDs } from '../../../../e2e/selectors/wallet/WalletView.selectors';
 import { showAlert } from '../../../actions/alert';
@@ -46,7 +45,44 @@ import Text, {
 import { withMetricsAwareness } from '../../../components/hooks/useMetrics';
 import { isPortfolioUrl } from '../../../util/url';
 
-const createStyles = (colors) =>
+interface AccountOverviewOwnProps {
+  account: {
+    address: string;
+    name: string;
+  };
+  onRef?: (ref: any) => void;
+  navigation: any;
+  metrics: any;
+}
+
+const mapStateToProps = (state: any) => ({
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  internalAccounts: selectInternalAccounts(state),
+  currentCurrency: selectCurrentCurrency(state),
+  chainId: selectChainId(state),
+  browserTabs: state.browser.tabs,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
+  newAssetTransaction: (selectedAsset: any) =>
+    dispatch(newAssetTransaction(selectedAsset)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type AccountOverviewProps = PropsFromRedux & AccountOverviewOwnProps;
+
+interface AccountOverviewState {
+  accountLabelEditable: boolean;
+  accountLabel: string;
+  originalAccountLabel: string;
+  ens?: string;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     scrollView: {
       backgroundColor: colors.background.default,
@@ -146,71 +182,29 @@ const createStyles = (colors) =>
  * View that's part of the <Wallet /> component
  * which shows information about the selected account
  */
-class AccountOverview extends PureComponent {
-  static propTypes = {
-    /**
-     * String that represents the selected address
-     */
-    selectedAddress: PropTypes.string,
-    /**
-    /* InternalAccounts object required to get account name
-    */
-    internalAccounts: PropTypes.object,
-    /**
-     * Object that represents the selected account
-     */
-    account: PropTypes.object,
-    /**
-    /* Triggers global alert
-    */
-    showAlert: PropTypes.func,
-    /**
-     * Used to get child ref
-     */
-    onRef: PropTypes.func,
-    /**
-     * Prompts protect wallet modal
-     */
-    protectWalletModalVisible: PropTypes.func,
-    /**
-    /* navigation object required to access the props
-    /* passed by the parent component
-    */
-    navigation: PropTypes.object,
-    /**
-     * The chain ID for the current selected network
-     */
-    chainId: PropTypes.string,
-    /**
-     * Current opens tabs in browser
-     */
-    browserTabs: PropTypes.array,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class AccountOverview extends PureComponent<AccountOverviewProps, AccountOverviewState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: AccountOverviewState = {
     accountLabelEditable: false,
     accountLabel: '',
     originalAccountLabel: '',
     ens: undefined,
   };
 
-  editableLabelRef = React.createRef();
-  scrollViewContainer = React.createRef();
-  mainView = React.createRef();
+  editableLabelRef = React.createRef<View>();
+  scrollViewContainer = React.createRef<View>();
+  mainView = React.createRef<View>();
+  input = React.createRef<TextInput>();
 
   openAccountSelector = () => {
     const { navigation } = this.props;
     navigation.navigate(...createAccountSelectorNavDetails({}));
   };
 
-  isAccountLabelDefined = (accountLabel) =>
+  isAccountLabelDefined = (accountLabel: string) =>
     !!accountLabel && !!accountLabel.trim().length;
-
-  input = React.createRef();
 
   componentDidMount = () => {
     const { internalAccounts, selectedAddress, onRef } = this.props;
@@ -226,7 +220,7 @@ class AccountOverview extends PureComponent {
     }
   };
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: AccountOverviewProps) {
     if (
       prevProps.account.address !== this.props.account.address ||
       prevProps.chainId !== this.props.chainId
@@ -254,7 +248,7 @@ class AccountOverview extends PureComponent {
     this.setState({ accountLabelEditable: false });
   };
 
-  onAccountLabelChange = (accountLabel) => {
+  onAccountLabelChange = (accountLabel: string) => {
     this.setState({ accountLabel });
   };
 
@@ -434,24 +428,4 @@ class AccountOverview extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  internalAccounts: selectInternalAccounts(state),
-  currentCurrency: selectCurrentCurrency(state),
-  chainId: selectChainId(state),
-  browserTabs: state.browser.tabs,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
-  newAssetTransaction: (selectedAsset) =>
-    dispatch(newAssetTransaction(selectedAsset)),
-});
-
-AccountOverview.contextType = ThemeContext;
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withMetricsAwareness(AccountOverview));
+export default connector(withMetricsAwareness(AccountOverview));
