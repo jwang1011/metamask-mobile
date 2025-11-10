@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, {
   useCallback,
   useContext,
@@ -8,7 +7,7 @@ import React, {
 } from 'react';
 import { View } from 'react-native';
 import { captureScreen } from 'react-native-view-shot';
-import { connect, useSelector } from 'react-redux';
+import { connect, useSelector, ConnectedProps } from 'react-redux';
 import { parseCaipAccountId } from '@metamask/utils';
 import { strings } from '../../../../locales/i18n';
 import { selectPermissionControllerState } from '../../../selectors/snaps';
@@ -59,11 +58,50 @@ import DiscoveryTab from '../DiscoveryTab/DiscoveryTab';
 
 const MAX_BROWSER_TABS = 5;
 
+interface BrowserTab {
+  id: number;
+  url: string;
+  linkType?: string;
+  isArchived?: boolean;
+  image?: string;
+}
+
+interface BrowserOwnProps {
+  navigation: any;
+  route: {
+    params?: {
+      url?: string;
+      linkType?: string;
+      newTabUrl?: string;
+      existingTabId?: number;
+      timestamp?: number;
+    };
+  };
+}
+
+const mapStateToProps = (state: any) => ({
+  tabs: state.browser.tabs,
+  activeTab: state.browser.activeTab,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  createNewTab: (url?: string, linkType?: string) => dispatch(createNewTab(url, linkType)),
+  closeAllTabs: () => dispatch(closeAllTabs()),
+  closeTab: (id: number) => dispatch(closeTab(id)),
+  setActiveTab: (id: number) => dispatch(setActiveTab(id)),
+  updateTab: (id: number, data: any) => dispatch(updateTab(id, data)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type BrowserProps = PropsFromRedux & BrowserOwnProps;
+
 /**
  * Component that wraps all the browser
  * individual tabs and the tabs view
  */
-export const Browser = (props) => {
+export const Browser: React.FC<BrowserProps> = (props) => {
   const {
     route,
     navigation,
@@ -75,16 +113,16 @@ export const Browser = (props) => {
     activeTab: activeTabId,
     tabs,
   } = props;
-  const previousTabs = useRef(null);
+  const previousTabs = useRef<BrowserTab[] | null>(null);
   const { top: topInset } = useSafeAreaInsets();
   const { styles } = useStyles(styleSheet, { topInset });
   const { trackEvent, createEventBuilder, isEnabled } = useMetrics();
   const { toastRef } = useContext(ToastContext);
   const browserUrl = props.route?.params?.url;
   const linkType = props.route?.params?.linkType;
-  const prevSiteHostname = useRef(browserUrl);
+  const prevSiteHostname = useRef<string | undefined>(browserUrl);
   const { accounts, ensByAccountAddress } = useAccounts();
-  const [_tabIdleTimes, setTabIdleTimes] = useState({});
+  const [_tabIdleTimes, setTabIdleTimes] = useState<{ [key: number]: number }>({});
   const [shouldShowTabs, setShouldShowTabs] = useState(false);
 
   const accountAvatarType = useSelector((state) =>
@@ -107,7 +145,7 @@ export const Browser = (props) => {
   );
 
   const newTab = useCallback(
-    (url, linkType) => {
+    (url?: string, linkType?: string) => {
       // if tabs.length > MAX_BROWSER_TABS, show the max browser tabs modal
       if (tabs.length >= MAX_BROWSER_TABS) {
         navigation.navigate(Routes.MODAL.MAX_BROWSER_TABS_MODAL);
@@ -125,18 +163,18 @@ export const Browser = (props) => {
   const [currentUrl, setCurrentUrl] = useState(browserUrl || homePageUrl());
 
   const updateTabInfo = useCallback(
-    (tabID, info) => {
+    (tabID: number, info: any) => {
       updateTab(tabID, info);
     },
     [updateTab],
   );
 
-  const hideTabsAndUpdateUrl = (url) => {
+  const hideTabsAndUpdateUrl = (url: string) => {
     setShouldShowTabs(false);
     setCurrentUrl(url);
   };
 
-  const switchToTab = (tab) => {
+  const switchToTab = (tab: BrowserTab) => {
     trackEvent(
       createEventBuilder(MetaMetricsEvents.BROWSER_SWITCH_TAB).build(),
     );
@@ -188,7 +226,7 @@ export const Browser = (props) => {
   }, [tabs, activeTabId, updateTab]);
 
   useEffect(() => {
-    const checkIfActiveAccountChanged = (hostnameForToastCheck) => {
+    const checkIfActiveAccountChanged = (hostnameForToastCheck: string) => {
       const permittedAccounts = getPermittedCaipAccountIdsByHostname(
         permittedAccountsList,
         hostnameForToastCheck,
@@ -314,7 +352,7 @@ export const Browser = (props) => {
   );
 
   const takeScreenshot = useCallback(
-    (url, tabID) =>
+    (url: string, tabID: number) =>
       new Promise((resolve, reject) => {
         captureScreen({
           format: 'jpg',
@@ -356,7 +394,7 @@ export const Browser = (props) => {
     }
   };
 
-  const closeTab = (tab) => {
+  const closeTab = (tab: BrowserTab) => {
     // If the tab was selected we have to select
     // the next one, and if there's no next one,
     // we select the previous one.
@@ -456,58 +494,6 @@ export const Browser = (props) => {
   );
 };
 
-const mapStateToProps = (state) => ({
-  tabs: state.browser.tabs,
-  activeTab: state.browser.activeTab,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  createNewTab: (url, linkType) => dispatch(createNewTab(url, linkType)),
-  closeAllTabs: () => dispatch(closeAllTabs()),
-  closeTab: (id) => dispatch(closeTab(id)),
-  setActiveTab: (id) => dispatch(setActiveTab(id)),
-  updateTab: (id, url) => dispatch(updateTab(id, url)),
-});
-
-Browser.propTypes = {
-  /**
-   * react-navigation object used to switch between screens
-   */
-  navigation: PropTypes.object,
-  /**
-   * Function to create a new tab
-   */
-  createNewTab: PropTypes.func,
-  /**
-   * Function to close all the existing tabs
-   */
-  closeAllTabs: PropTypes.func,
-  /**
-   * Function to close a specific tab
-   */
-  closeTab: PropTypes.func,
-  /**
-   * Function to set the active tab
-   */
-  setActiveTab: PropTypes.func,
-  /**
-   * Function to set the update the url of a tab
-   */
-  updateTab: PropTypes.func,
-  /**
-   * Array of tabs
-   */
-  tabs: PropTypes.array,
-  /**
-   * ID of the active tab
-   */
-  activeTab: PropTypes.number,
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-};
-
 export { default as createBrowserNavDetails } from './Browser.types';
 
-export default connect(mapStateToProps, mapDispatchToProps)(Browser);
+export default connector(Browser);
