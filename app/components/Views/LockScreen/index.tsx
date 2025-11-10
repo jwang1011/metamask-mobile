@@ -7,9 +7,10 @@ import {
   View,
   AppState,
   Appearance,
+  AppStateStatus,
+  NativeEventSubscription,
 } from 'react-native';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import LottieView from 'lottie-react-native';
 import { baseStyles } from '../../../styles/common';
 import Logger from '../../../util/Logger';
@@ -23,8 +24,17 @@ import Routes from '../../../constants/navigation/Routes';
 import { CommonActions } from '@react-navigation/native';
 import trackErrorAsAnalytics from '../../../util/metrics/TrackError/trackErrorAsAnalytics';
 
+interface LockScreenOwnProps {
+  navigation: any;
+  bioStateMachineId?: string;
+}
+
+interface LockScreenState {
+  ready: boolean;
+}
+
 const LOGO_SIZE = 175;
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
       backgroundColor: colors.background.default,
@@ -66,34 +76,33 @@ const createStyles = (colors) =>
 const wordmarkLight = require('../../../animations/wordmark-light.json');
 const wordmarkDark = require('../../../animations/wordmark-dark.json');
 
+const mapStateToProps = (state: any) => ({
+  appTheme: state.user.appTheme,
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type LockScreenProps = PropsFromRedux & LockScreenOwnProps;
+
 /**
  * Main view component for the Lock screen
  */
-class LockScreen extends PureComponent {
-  static propTypes = {
-    /**
-     * The navigator object
-     */
-    navigation: PropTypes.object,
-    appTheme: PropTypes.string,
-    /**
-     * ID associated with each biometric session.
-     * This is used by the biometric sagas to handle actions with the matching ID.
-     */
-    bioStateMachineId: PropTypes.string,
-  };
+class LockScreen extends PureComponent<LockScreenProps, LockScreenState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: LockScreenState = {
     ready: false,
   };
 
   locked = true;
   timedOut = false;
-  firstAnimation = React.createRef();
-  secondAnimation = React.createRef();
-  animationName = React.createRef();
+  firstAnimation: LottieView | null = null;
+  secondAnimation: LottieView | null = null;
+  animationName: LottieView | null = null;
   opacity = new Animated.Value(1);
-  appStateListener;
+  appStateListener?: NativeEventSubscription;
 
   componentDidMount() {
     this.appStateListener = AppState.addEventListener(
@@ -102,7 +111,7 @@ class LockScreen extends PureComponent {
     );
   }
 
-  handleAppStateChange = async (nextAppState) => {
+  handleAppStateChange = async (nextAppState: AppStateStatus) => {
     // Trigger biometrics
     if (nextAppState === 'active') {
       this.firstAnimation?.play();
@@ -232,16 +241,19 @@ class LockScreen extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  appTheme: state.user.appTheme,
-});
+const ConnectedLockScreen = connector(LockScreen);
 
-LockScreen.contextType = ThemeContext;
-
-const ConnectedLockScreen = connect(mapStateToProps)(LockScreen);
+interface LockScreenFCWrapperProps {
+  route: {
+    params: {
+      bioStateMachineId: string;
+    };
+  };
+  navigation: any;
+}
 
 // Wrapper that forces LockScreen to re-render when bioStateMachineId changes.
-const LockScreenFCWrapper = (props) => {
+const LockScreenFCWrapper: React.FC<LockScreenFCWrapperProps> = (props) => {
   const { bioStateMachineId } = props.route.params;
   return (
     <ConnectedLockScreen
@@ -250,13 +262,6 @@ const LockScreenFCWrapper = (props) => {
       {...props}
     />
   );
-};
-
-LockScreenFCWrapper.propTypes = {
-  /**
-   * Navigation object that holds params including bioStateMachineId.
-   */
-  route: PropTypes.object,
 };
 
 export default LockScreenFCWrapper;

@@ -4,18 +4,17 @@ import { SafeAreaView, Image, View, StyleSheet } from 'react-native';
 import Text from '../../Base/Text';
 import NetInfo from '@react-native-community/netinfo';
 import { baseStyles, fontStyles } from '../../../styles/common';
-import PropTypes from 'prop-types';
 import { strings } from '../../../../locales/i18n';
 import StyledButton from '../../UI/StyledButton';
 import { getOfflineModalNavbar } from '../../UI/Navbar';
 import AndroidBackHandler from '../AndroidBackHandler';
 import Device from '../../../util/device';
 import AppConstants from '../../../core/AppConstants';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { getInfuraBlockedSelector } from '../../../reducers/infuraAvailability';
 import { useTheme } from '../../../util/theme';
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -51,7 +50,21 @@ const createStyles = (colors) =>
 
 const astronautImage = require('../../../images/astronaut.png'); // eslint-disable-line import/no-commonjs
 
-const OfflineMode = ({ navigation, infuraBlocked }) => {
+const mapStateToProps = (state: any) => ({
+  infuraBlocked: getInfuraBlockedSelector(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+
+interface OfflineModeOwnProps {
+  navigation: any;
+}
+
+type OfflineModeProps = PropsFromRedux & OfflineModeOwnProps;
+
+const OfflineMode: React.FC<OfflineModeProps> = ({ navigation, infuraBlocked }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -103,22 +116,7 @@ const OfflineMode = ({ navigation, infuraBlocked }) => {
   );
 };
 
-OfflineMode.navigationOptions = ({ navigation }) =>
+OfflineMode.navigationOptions = ({ navigation }: any) =>
   getOfflineModalNavbar(navigation);
 
-OfflineMode.propTypes = {
-  /**
-   * Object that represents the navigator
-   */
-  navigation: PropTypes.object,
-  /**
-   * Whether infura was blocked or not
-   */
-  infuraBlocked: PropTypes.bool,
-};
-
-const mapStateToProps = (state) => ({
-  infuraBlocked: getInfuraBlockedSelector(state),
-});
-
-export default connect(mapStateToProps)(OfflineMode);
+export default connector(OfflineMode);
