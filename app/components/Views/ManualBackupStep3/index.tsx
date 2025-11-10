@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Alert, BackHandler, View, StyleSheet, Keyboard } from 'react-native';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
+import { connect, ConnectedProps } from 'react-redux';
 import { fontStyles } from '../../../styles/common';
 import StorageWrapper from '../../../store/storage-wrapper';
 import { saveOnboardingEvent as saveEvent } from '../../../actions/onboarding';
@@ -20,7 +19,33 @@ import trackOnboarding from '../../../util/metrics/TrackOnboarding/trackOnboardi
 import { OnboardingSuccessComponent } from '../OnboardingSuccess';
 import { MetricsEventBuilder } from '../../../core/Analytics/MetricsEventBuilder';
 
-const createStyles = (colors) =>
+interface ManualBackupStep3OwnProps {
+  navigation: any;
+  route: {
+    params?: {
+      steps?: number;
+      words?: string[];
+    };
+  };
+}
+
+interface ManualBackupStep3State {
+  currentStep: number;
+  showHint: boolean;
+  hintText: string;
+}
+
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+});
+
+const connector = connect(null, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ManualBackupStep3Props = PropsFromRedux & ManualBackupStep3OwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     mainWrapper: {
       backgroundColor: colors.background.default,
@@ -73,31 +98,21 @@ const HARDWARE_BACK_PRESS = 'hardwareBackPress';
  * View that's shown during the last step of
  * the backup seed phrase flow
  */
-class ManualBackupStep3 extends PureComponent {
-  constructor(props) {
+class ManualBackupStep3 extends PureComponent<ManualBackupStep3Props, ManualBackupStep3State> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
+
+  steps?: number;
+
+  constructor(props: ManualBackupStep3Props) {
     super(props);
     this.steps = props.route.params?.steps;
   }
 
-  state = {
+  state: ManualBackupStep3State = {
     currentStep: 4,
     showHint: false,
     hintText: '',
-  };
-
-  static propTypes = {
-    /**
-    /* navigation object required to push and pop other views
-    */
-    navigation: PropTypes.object,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Action to save onboarding event
-     */
-    saveOnboardingEvent: PropTypes.func,
   };
 
   updateNavBar = () => {
@@ -141,7 +156,7 @@ class ManualBackupStep3 extends PureComponent {
       },
     });
 
-  isHintSeedPhrase = (hintText) => {
+  isHintSeedPhrase = (hintText: string) => {
     const words = this.props.route.params?.words;
     if (words) {
       const lower = (string) => String(string).toLowerCase();
@@ -178,7 +193,7 @@ class ManualBackupStep3 extends PureComponent {
     this.props.navigation.reset({ routes: [{ name: 'HomeNav' }] });
   };
 
-  handleChangeText = (text) => this.setState({ hintText: text });
+  handleChangeText = (text: string) => this.setState({ hintText: text });
 
   renderHint = () => {
     const { showHint, hintText } = this.state;
@@ -219,11 +234,4 @@ class ManualBackupStep3 extends PureComponent {
   }
 }
 
-ManualBackupStep3.contextType = ThemeContext;
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-});
-
-export default connect(null, mapDispatchToProps)(ManualBackupStep3);
+export default connector(ManualBackupStep3);

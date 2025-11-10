@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   ScrollView,
   TouchableOpacity,
@@ -13,12 +12,32 @@ import {
 import { fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
 import Device from '../../../util/device';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { isMainNet } from '../../../util/networks';
 import { ThemeContext, mockTheme } from '../../../util/theme';
 import { selectChainId } from '../../../selectors/networkController';
 
-const createStyles = (colors) =>
+interface CollectibleContractInformationOwnProps {
+  navigation: any;
+  onClose: (value: boolean) => void;
+  collectibleContract: {
+    name: string;
+    description?: string;
+    totalSupply?: string;
+    address: string;
+  };
+}
+
+const mapStateToProps = (state: any) => ({
+  chainId: selectChainId(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type CollectibleContractInformationProps = PropsFromRedux & CollectibleContractInformationOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: colors.background.default,
@@ -112,26 +131,9 @@ const openSeaLogo = require('../../../images/opensea-logo-flat-colored-blue.png'
 /**
  * View that contains a collectible contract information as description, total supply and address
  */
-class CollectibleContractInformation extends PureComponent {
-  static propTypes = {
-    /**
-     * Navigation object required to push
-     * the Asset detail view
-     */
-    navigation: PropTypes.object,
-    /**
-     * An function to handle the close event
-     */
-    onClose: PropTypes.func,
-    /**
-     * Collectible contract object
-     */
-    collectibleContract: PropTypes.object,
-    /**
-     * The chain ID for the current selected network
-     */
-    chainId: PropTypes.string.isRequired,
-  };
+class CollectibleContractInformation extends PureComponent<CollectibleContractInformationProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   closeModal = () => {
     this.props.onClose(true);
@@ -227,10 +229,4 @@ class CollectibleContractInformation extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  chainId: selectChainId(state),
-});
-
-CollectibleContractInformation.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(CollectibleContractInformation);
+export default connector(CollectibleContractInformation);
