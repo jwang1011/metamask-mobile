@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import {
   Dimensions,
@@ -31,7 +30,23 @@ const ROWS_VISIBLE = Math.floor(
 );
 const TABS_VISIBLE = ROWS_VISIBLE;
 
-const createStyles = (colors, shadows) =>
+interface TabsProps {
+  tabs: any[];
+  activeTab: number;
+  newTab: () => void;
+  closeTab: (tab: any) => void;
+  closeAllTabs: () => void;
+  closeTabsView: () => void;
+  switchToTab: (tab: any) => void;
+  animateCurrentTab?: (tab: any) => void;
+  metrics: any;
+}
+
+interface TabsState {
+  currentTab: any;
+}
+
+const createStyles = (colors: any, shadows: any) =>
   StyleSheet.create({
     noTabs: {
       flex: 1,
@@ -125,55 +140,19 @@ const createStyles = (colors, shadows) =>
  * PureComponent that wraps all the thumbnails
  * representing all the open tabs
  */
-class Tabs extends PureComponent {
-  static propTypes = {
-    /**
-     * Array of tabs
-     */
-    tabs: PropTypes.array,
-    /**
-     * ID of the active tab
-     */
-    activeTab: PropTypes.number,
-    /**
-     * Opens a new tab
-     */
-    newTab: PropTypes.func,
-    /**
-     * Closes a tab
-     */
-    closeTab: PropTypes.func,
-    /**
-     * Closes all tabs
-     */
-    closeAllTabs: PropTypes.func,
-    /**
-     * Dismiss the entire view
-     */
-    closeTabsView: PropTypes.func,
-    /**
-     * Switches to a specific tab
-     */
-    switchToTab: PropTypes.func,
-    /**
-     * Sets the current tab used for the animation
-     */
-    animateCurrentTab: PropTypes.func, // eslint-disable-line react/no-unused-prop-types
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class Tabs extends PureComponent<TabsProps, TabsState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  thumbnails = {};
+  thumbnails: { [key: number]: React.RefObject<any> } = {};
 
-  state = {
+  state: TabsState = {
     currentTab: null,
   };
 
-  scrollview = React.createRef();
+  scrollview = React.createRef<ScrollView>();
 
-  constructor(props) {
+  constructor(props: TabsProps) {
     super(props);
     this.createTabsRef(props.tabs);
   }
@@ -202,19 +181,19 @@ class Tabs extends PureComponent {
     }
   }
 
-  createTabsRef(tabs) {
+  createTabsRef(tabs: any[]) {
     tabs.forEach((tab) => {
       this.thumbnails[tab.id] = React.createRef();
     });
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: TabsProps) {
     if (prevProps.tabs.length !== Object.keys(this.thumbnails).length) {
       this.createTabsRef(this.props.tabs);
     }
   }
 
-  onSwitch = async (tab) => {
+  onSwitch = async (tab: any) => {
     this.props.switchToTab(tab);
   };
 
@@ -239,7 +218,7 @@ class Tabs extends PureComponent {
       </View>
     );
   }
-  renderTabs(tabs, activeTab) {
+  renderTabs(tabs: any[], activeTab: number) {
     const styles = this.getStyles();
 
     return (
@@ -270,7 +249,7 @@ class Tabs extends PureComponent {
     this.trackNewTabEvent(tabs.length);
   };
 
-  trackNewTabEvent = (tabsNumber) => {
+  trackNewTabEvent = (tabsNumber: number) => {
     this.props.metrics.trackEvent(
       this.props.metrics
         .createEventBuilder(MetaMetricsEvents.BROWSER_NEW_TAB)
@@ -353,7 +332,5 @@ class Tabs extends PureComponent {
     );
   }
 }
-
-Tabs.contextType = ThemeContext;
 
 export default withMetricsAwareness(Tabs);
