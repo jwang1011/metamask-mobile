@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native';
 import { fontStyles } from '../../../../../styles/common';
-import PropTypes from 'prop-types';
 import { getEditableOptions } from '../../../../UI/Navbar';
 import StyledButton from '../../../../UI/StyledButton';
 import Engine from '../../../../../core/Engine';
@@ -149,35 +148,17 @@ const EDIT = 'edit';
 /**
  * View that contains app information
  */
-class ContactForm extends PureComponent {
-  static propTypes = {
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * An array containing each account with metadata
-     */
-    internalAccounts: PropTypes.array,
-    /**
-     * Map representing the address book
-     */
-    addressBook: PropTypes.object,
-    /**
-     * Object that represents the network configuration
-     */
-    networkConfigurations: PropTypes.object,
-    /**
-     * The current chain ID of the app
-     */
-    chainId: PropTypes.string,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-  };
+class ContactForm extends PureComponent<ContactFormProps, ContactFormState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  contactAddressToRemove: string | undefined;
+  actionSheet: any;
+  addressInput: React.RefObject<any>;
+  memoInput: React.RefObject<any>;
+  sheetRef: React.RefObject<any>;
+
+  state: ContactFormState = {
     name: null,
     address: null,
     originalContactChainId: '',
@@ -193,11 +174,13 @@ class ContactForm extends PureComponent {
     openNetworkSelector: false,
   };
 
-  actionSheet = React.createRef();
-  addressInput = React.createRef();
-  memoInput = React.createRef();
-
-  sheetRef = React.createRef();
+  constructor(props: ContactFormProps) {
+    super(props);
+    this.actionSheet = React.createRef();
+    this.addressInput = React.createRef();
+    this.memoInput = React.createRef();
+    this.sheetRef = React.createRef();
+  }
 
   updateNavBar = () => {
     const { navigation, route } = this.props;
@@ -267,11 +250,11 @@ class ContactForm extends PureComponent {
     this.actionSheet && this.actionSheet.show();
   };
 
-  onChangeName = (name) => {
+  onChangeName = (name: string) => {
     this.setState({ name });
   };
 
-  validateAddressOrENSFromInput = async (address) => {
+  validateAddressOrENSFromInput = async (address: string) => {
     const { addressBook, internalAccounts, chainId } = this.props;
     const { contactChainId } = this.state;
 
@@ -297,12 +280,12 @@ class ContactForm extends PureComponent {
     });
   };
 
-  onChangeAddress = (address) => {
+  onChangeAddress = (address: string) => {
     this.validateAddressOrENSFromInput(address);
     this.setState({ address });
   };
 
-  onChangeMemo = (memo) => {
+  onChangeMemo = (memo: string) => {
     this.setState({ memo });
   };
 
@@ -374,19 +357,19 @@ class ContactForm extends PureComponent {
     );
   };
 
-  setSelectedNetwork = (contactChainId) => {
+  setSelectedNetwork = (contactChainId: string) => {
     this.setState({ contactChainId });
   };
 
-  setOpenNetworkSelector = (openNetworkSelector) => {
+  setOpenNetworkSelector = (openNetworkSelector: boolean) => {
     this.setState({ openNetworkSelector });
   };
 
-  createActionSheetRef = (ref) => {
+  createActionSheetRef = (ref: any) => {
     this.actionSheet = ref;
   };
 
-  renderErrorMessage = (addressError) => {
+  renderErrorMessage = (addressError: string) => {
     let errorMessage = addressError;
 
     if (addressError === CONTACT_ALREADY_SAVED) {
@@ -660,9 +643,7 @@ class ContactForm extends PureComponent {
   };
 }
 
-ContactForm.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: any) => ({
   addressBook: selectAddressBook(state),
   internalAccounts: selectInternalAccounts(state),
   chainId: selectEvmChainId(state),
