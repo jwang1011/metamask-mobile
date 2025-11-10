@@ -1,6 +1,5 @@
 import React, { Fragment, PureComponent } from 'react';
 import { View, ScrollView, Alert, Platform, BackHandler } from 'react-native';
-import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -77,109 +76,63 @@ import ContextualNetworkPicker from '../../../../../UI/ContextualNetworkPicker/C
 
 const dummy = () => true;
 
+interface SendFlowProps {
+  addressBook: any;
+  globalChainId: string;
+  navigation: any;
+  newAssetTransaction: (asset: any) => void;
+  selectedAddress: string;
+  internalAccounts: any[];
+  ticker: string;
+  setRecipient: (from: string, to: string, ensRecipient?: string, toName?: string, fromName?: string) => void;
+  setSelectedAsset: (asset: any) => void;
+  showAlert: (config: any) => void;
+  providerType: string;
+  route: any;
+  isPaymentRequest?: boolean;
+  isNativeTokenBuySupported?: boolean;
+  updateParentState?: (state: any) => void;
+  resetTransaction: () => void;
+  showAmbiguousAcountWarning?: boolean;
+  ambiguousAddressEntries?: any;
+  metrics: any;
+  contextualChainId?: string;
+  contextualNetworkConfiguration?: any;
+  setTransactionContextualChainId: (chainId: string | null) => void;
+  networkName?: string;
+  networkImageSource?: any;
+}
+
+interface SendFlowState {
+  addressError?: string;
+  balanceIsZero: boolean;
+  fromSelectedAddress: string;
+  toAccount?: string;
+  toSelectedAddressName?: string;
+  toSelectedAddressReady: boolean;
+  toEnsName?: string;
+  toEnsAddressResolved?: string;
+  confusableCollection: any[];
+  inputWidth: { width: string };
+  showAmbiguousAcountWarning: boolean;
+  toInputHighlighted?: boolean;
+  isFromAddressBook?: boolean;
+  addToAddressToAddressBook?: boolean;
+  errorContinue?: boolean;
+  isOnlyWarning?: boolean;
+}
+
 /**
  * View that wraps the wraps the "Send" screen
  */
-class SendFlow extends PureComponent {
-  static propTypes = {
-    /**
-     * Map representing the address book
-     */
-    addressBook: PropTypes.object,
-    /**
-     * Network provider chain id
-     */
-    globalChainId: PropTypes.string,
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * Start transaction with asset
-     */
-    newAssetTransaction: PropTypes.func.isRequired,
-    /**
-     * Selected address as string
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * List of accounts from the AccountsController
-     */
-    internalAccounts: PropTypes.array,
-    /**
-     * Current provider ticker
-     */
-    ticker: PropTypes.string,
-    /**
-     * Action that sets transaction to and ensRecipient in case is available
-     */
-    setRecipient: PropTypes.func,
-    /**
-     * Set selected in transaction state
-     */
-    setSelectedAsset: PropTypes.func,
-    /**
-     * Show alert
-     */
-    showAlert: PropTypes.func,
-    /**
-     * Network provider type as mainnet
-     */
-    providerType: PropTypes.string,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Indicates whether the current transaction is a deep link transaction
-     */
-    isPaymentRequest: PropTypes.bool,
-    /**
-     * Boolean that indicates if the network supports buy
-     */
-    isNativeTokenBuySupported: PropTypes.bool,
-    updateParentState: PropTypes.func,
-    /**
-     * Resets transaction state
-     */
-    resetTransaction: PropTypes.func,
-    /**
-     * Boolean to show warning if send to address is on multiple networks
-     */
-    showAmbiguousAcountWarning: PropTypes.bool,
-    /**
-     * Object of addresses associated with multiple chains {'id': [address: string]}
-     */
-    ambiguousAddressEntries: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-    /**
-     * Send flow contextual chain id
-     */
-    contextualChainId: PropTypes.string,
-    /**
-     * Send flow contextual network configuration
-     */
-    contextualNetworkConfiguration: PropTypes.object,
-    /**
-     * Set transaction send flow contextual chain id
-     */
-    setTransactionContextualChainId: PropTypes.func,
-    /**
-     * Network name
-     */
-    networkName: PropTypes.string,
-    /**
-     * Network image source
-     */
-    networkImageSource: PropTypes.object,
-  };
+class SendFlow extends PureComponent<SendFlowProps, SendFlowState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  addressToInputRef = React.createRef();
+  addressToInputRef: React.RefObject<any>;
+  hardwareBackPress?: () => boolean;
 
-  state = {
+  state: SendFlowState = {
     addressError: undefined,
     balanceIsZero: false,
     fromSelectedAddress: this.props.selectedAddress,
@@ -192,6 +145,11 @@ class SendFlow extends PureComponent {
     inputWidth: { width: '99%' },
     showAmbiguousAcountWarning: false,
   };
+
+  constructor(props: SendFlowProps) {
+    super(props);
+    this.addressToInputRef = React.createRef();
+  }
 
   updateNavBar = () => {
     const { navigation, route, resetTransaction } = this.props;
@@ -286,7 +244,7 @@ class SendFlow extends PureComponent {
     return addressError;
   };
 
-  handleNetworkSwitch = (globalChainId) => {
+  handleNetworkSwitch = (globalChainId: string) => {
     try {
       const { showAlert } = this.props;
       const networkName = handleNetworkSwitch(globalChainId);
@@ -386,7 +344,7 @@ class SendFlow extends PureComponent {
     );
   };
 
-  renderAddressError = (addressError) =>
+  renderAddressError = (addressError: string) =>
     addressError === SYMBOL_ERROR ? (
       <Fragment>
         <Text>{strings('transaction.tokenContractAddressWarning_1')}</Text>
@@ -397,19 +355,19 @@ class SendFlow extends PureComponent {
       addressError
     );
 
-  updateParentState = (state) => {
+  updateParentState = (state: any) => {
     this.setState({ ...state });
   };
 
-  fromAccountBalanceState = (value) => {
+  fromAccountBalanceState = (value: boolean) => {
     this.setState({ balanceIsZero: value });
   };
 
-  setFromAddress = (address) => {
+  setFromAddress = (address: string) => {
     this.setState({ fromSelectedAddress: address });
   };
 
-  getAddressNameFromBookOrInternalAccounts = (toAccount) => {
+  getAddressNameFromBookOrInternalAccounts = (toAccount: string) => {
     const { addressBook, internalAccounts, globalChainId } = this.props;
     if (!toAccount) return;
 
@@ -436,7 +394,7 @@ class SendFlow extends PureComponent {
       : null;
   };
 
-  validateAddressOrENSFromInput = async (toAccount) => {
+  validateAddressOrENSFromInput = async (toAccount: string) => {
     const { addressBook, internalAccounts, globalChainId } = this.props;
     const {
       addressError,
@@ -468,7 +426,7 @@ class SendFlow extends PureComponent {
     });
   };
 
-  onToSelectedAddressChange = (toAccount) => {
+  onToSelectedAddressChange = (toAccount: string) => {
     const { ambiguousAddressEntries, globalChainId } = this.props;
     const currentChain =
       ambiguousAddressEntries && ambiguousAddressEntries[globalChainId];
@@ -524,7 +482,7 @@ class SendFlow extends PureComponent {
     this.setState({ showAmbiguousAcountWarning: false });
   };
 
-  safeChecksumAddress = (address) => {
+  safeChecksumAddress = (address: string) => {
     try {
       return toChecksumAddress(address);
     } catch (error) {
@@ -764,9 +722,7 @@ class SendFlow extends PureComponent {
   };
 }
 
-SendFlow.contextType = ThemeContext;
-
-const mapStateToProps = (state) => {
+const mapStateToProps = (state: any) => {
   const globalChainId = selectEvmChainId(state);
   const contextualChainId =
     selectSendFlowContextualChainId(state) || globalChainId;
@@ -802,13 +758,13 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: any) => ({
   setRecipient: (
-    from,
-    to,
-    ensRecipient,
-    transactionToName,
-    transactionFromName,
+    from: string,
+    to: string,
+    ensRecipient?: string,
+    transactionToName?: string,
+    transactionFromName?: string,
   ) =>
     dispatch(
       setRecipient(
@@ -819,16 +775,16 @@ const mapDispatchToProps = (dispatch) => ({
         transactionFromName,
       ),
     ),
-  newAssetTransaction: (selectedAsset) =>
+  newAssetTransaction: (selectedAsset: any) =>
     dispatch(newAssetTransaction(selectedAsset)),
-  setSelectedAsset: (selectedAsset) =>
+  setSelectedAsset: (selectedAsset: any) =>
     dispatch(setSelectedAsset(selectedAsset)),
-  showAlert: (config) => dispatch(showAlert(config)),
+  showAlert: (config: any) => dispatch(showAlert(config)),
   resetTransaction: () => {
     dispatch(setTransactionSendFlowContextualChainId(null));
     dispatch(resetTransaction());
   },
-  setTransactionContextualChainId: (chainId) =>
+  setTransactionContextualChainId: (chainId: string | null) =>
     dispatch(setTransactionSendFlowContextualChainId(chainId)),
 });
 
