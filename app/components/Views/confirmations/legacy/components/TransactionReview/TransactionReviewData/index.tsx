@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import IonicIcon from 'react-native-vector-icons/Ionicons';
 import { fontStyles } from '../../../../../../../styles/common';
 import { strings } from '../../../../../../../../locales/i18n';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import Device from '../../../../../../../util/device';
 import { ThemeContext, mockTheme } from '../../../../../../../util/theme';
 import ClipboardManager from '../../../../../../../core/ClipboardManager';
@@ -16,7 +15,31 @@ import {
   selectCurrentCurrency,
 } from '../../../../../../../selectors/currencyRateController';
 
-const createStyles = (colors) =>
+interface TransactionReviewDataOwnProps {
+  actionKey: string;
+  toggleDataView: () => void;
+  customGasHeight: number;
+}
+
+const mapStateToProps = (state: any) => ({
+  conversionRate: selectConversionRateByChainId(
+    state,
+    state.transaction.chainId,
+  ),
+  currentCurrency: selectCurrentCurrency(state),
+  transaction: state.transaction,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TransactionReviewDataProps = PropsFromRedux & TransactionReviewDataOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     root: {
       paddingHorizontal: 24,
@@ -78,29 +101,9 @@ const createStyles = (colors) =>
 /**
  * PureComponent that supports reviewing transaction data
  */
-class TransactionReviewData extends PureComponent {
-  static propTypes = {
-    /**
-     * Transaction object associated with this transaction
-     */
-    transaction: PropTypes.object,
-    /**
-     * Transaction corresponding action key
-     */
-    actionKey: PropTypes.string,
-    /**
-     * Hides or shows transaction data
-     */
-    toggleDataView: PropTypes.func,
-    /**
-     * Height of custom gas and data modal
-     */
-    customGasHeight: PropTypes.number,
-    /**
-     * Triggers global alert
-     */
-    showAlert: PropTypes.func,
-  };
+class TransactionReviewData extends PureComponent<TransactionReviewDataProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   applyRootHeight = () => ({ height: this.props.customGasHeight });
 
@@ -182,22 +185,4 @@ class TransactionReviewData extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  conversionRate: selectConversionRateByChainId(
-    state,
-    state.transaction.chainId,
-  ),
-  currentCurrency: selectCurrentCurrency(state),
-  transaction: state.transaction,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-});
-
-TransactionReviewData.contextType = ThemeContext;
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(TransactionReviewData);
+export default connector(TransactionReviewData);

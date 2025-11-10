@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
 import ActionModal from '../ActionModal';
 import { fontStyles } from '../../../styles/common';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { protectWalletModalNotVisible } from '../../../actions/user';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { strings } from '../../../../locales/i18n';
@@ -15,9 +14,30 @@ import { ProtectWalletModalSelectorsIDs } from '../../../../e2e/selectors/Onboar
 import { withMetricsAwareness } from '../../../components/hooks/useMetrics';
 import { selectSeedlessOnboardingLoginFlow } from '../../../selectors/seedlessOnboardingController';
 
+interface ProtectYourWalletModalOwnProps {
+  navigation: any;
+  metrics: any;
+}
+
+const mapStateToProps = (state: any) => ({
+  protectWalletModalVisible: state.user.protectWalletModalVisible,
+  passwordSet: state.user.passwordSet,
+  isSeedlessOnboardingLoginFlow: selectSeedlessOnboardingLoginFlow(state),
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  protectWalletModalNotVisible: (enable?: boolean) =>
+    dispatch(protectWalletModalNotVisible()),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ProtectYourWalletModalProps = PropsFromRedux & ProtectYourWalletModalOwnProps;
+
 const protectWalletImage = require('../../../images/explain-backup-seedphrase.png'); // eslint-disable-line
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       marginTop: 24,
@@ -75,30 +95,9 @@ const createStyles = (colors) =>
 /**
  * View that renders an action modal
  */
-class ProtectYourWalletModal extends PureComponent {
-  static propTypes = {
-    navigation: PropTypes.object,
-    /**
-     * Hide this modal
-     */
-    protectWalletModalNotVisible: PropTypes.func,
-    /**
-     * Whether this modal is visible
-     */
-    protectWalletModalVisible: PropTypes.bool,
-    /**
-     * Boolean that determines if the user has set a password before
-     */
-    passwordSet: PropTypes.bool,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-    /**
-     * A boolean representing if the user is in the seedless onboarding login flow
-     */
-    isSeedlessOnboardingLoginFlow: PropTypes.bool,
-  };
+class ProtectYourWalletModal extends PureComponent<ProtectYourWalletModalProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   goToBackupFlow = () => {
     this.props.protectWalletModalNotVisible();
@@ -206,20 +205,4 @@ class ProtectYourWalletModal extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  protectWalletModalVisible: state.user.protectWalletModalVisible,
-  passwordSet: state.user.passwordSet,
-  isSeedlessOnboardingLoginFlow: selectSeedlessOnboardingLoginFlow(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  protectWalletModalNotVisible: (enable) =>
-    dispatch(protectWalletModalNotVisible()),
-});
-
-ProtectYourWalletModal.contextType = ThemeContext;
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withMetricsAwareness(ProtectYourWalletModal));
+export default connector(withMetricsAwareness(ProtectYourWalletModal));
