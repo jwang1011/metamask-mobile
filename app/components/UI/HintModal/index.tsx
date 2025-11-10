@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import {
   View,
   StyleSheet,
@@ -18,7 +17,16 @@ import ButtonIcon, {
 } from '../../../component-library/components/Buttons/ButtonIcon';
 import { IconName } from '../../../component-library/components/Icons/Icon';
 
-const createStyles = (colors) =>
+interface HintModalProps {
+  onCancel: () => void;
+  onConfirm: () => void;
+  modalVisible: boolean;
+  onRequestClose: () => void;
+  value?: string;
+  onChangeText: (text: string) => void;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     hintWrapper: {
       flex: 1,
@@ -55,7 +63,7 @@ const createStyles = (colors) =>
     },
   });
 
-const HintModal = ({
+const HintModal: React.FC<HintModalProps> = ({
   onCancel,
   onConfirm,
   modalVisible,
@@ -113,20 +121,5 @@ const HintModal = ({
     </ActionModal>
   );
 };
-
-const propTypes = {
-  onCancel: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
-  modalVisible: PropTypes.bool.isRequired,
-  onRequestClose: PropTypes.func.isRequired,
-  value: PropTypes.string,
-  onChangeText: PropTypes.func.isRequired,
-};
-const defaultProps = {
-  modalVisible: false,
-};
-
-HintModal.propTypes = propTypes;
-HintModal.defaultProps = defaultProps;
 
 export default HintModal;
