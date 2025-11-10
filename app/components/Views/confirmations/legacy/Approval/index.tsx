@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { TransactionEnvelopeType } from '@metamask/transaction-controller';
 import { StyleSheet, AppState, Alert, InteractionManager } from 'react-native';
 import Engine from '../../../../../core/Engine';
-import PropTypes from 'prop-types';
 import TransactionEditor from './components/TransactionEditor';
 import Modal from 'react-native-modal';
 import { safeBNToHex } from '../../../../../util/number';
@@ -72,91 +71,50 @@ const styles = StyleSheet.create({
   },
 });
 
+interface ApprovalProps {
+  selectedAddress: string;
+  navigation: any;
+  resetTransaction: () => void;
+  transaction: any;
+  transactions: any[];
+  networkType: string;
+  hideModal?: () => void;
+  dappTransactionModalVisible?: boolean;
+  showCustomNonce?: boolean;
+  chainId: string;
+  metrics: any;
+  shouldUseSmartTransaction?: boolean;
+  confirmationMetricsById: any;
+  securityAlertResponse?: any;
+  simulationData?: any;
+}
+
+interface ApprovalState {
+  mode: string;
+  transactionHandled: boolean;
+  transactionConfirmed: boolean;
+  isChangeInSimulationModalOpen: boolean;
+}
+
 /**
  * PureComponent that manages transaction approval from the dapp browser
  */
-class Approval extends PureComponent {
-  appStateListener;
+class Approval extends PureComponent<ApprovalProps, ApprovalState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  #transactionFinishedListener;
+  appStateListener: any;
+  #transactionFinishedListener: any;
+  originIsWalletConnect: boolean = false;
+  originIsMMSDKRemoteConn: boolean = false;
+  hardwareBackPress?: () => boolean;
 
-  static propTypes = {
-    /**
-     * A string that represents the selected address
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * react-navigation object used for switching between screens
-     */
-    navigation: PropTypes.object.isRequired,
-    /**
-     * Action that cleans transaction state
-     */
-    resetTransaction: PropTypes.func.isRequired,
-    /**
-     * Transaction state
-     */
-    transaction: PropTypes.object.isRequired,
-    /**
-     * List of transactions
-     */
-    transactions: PropTypes.array,
-    /**
-     * A string representing the network name
-     */
-    networkType: PropTypes.string,
-    /**
-     * Hide dapp transaction modal
-     */
-    hideModal: PropTypes.func,
-    /**
-     * Tells whether or not dApp transaction modal is visible
-     */
-    dappTransactionModalVisible: PropTypes.bool,
-    /**
-     * Indicates whether custom nonce should be shown in transaction editor
-     */
-    showCustomNonce: PropTypes.bool,
-
-    /**
-     * A string representing the network chainId
-     */
-    chainId: PropTypes.string,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-
-    /**
-     * Boolean that indicates if smart transaction should be used
-     */
-    shouldUseSmartTransaction: PropTypes.bool,
-
-    /**
-     * Object containing confirmation metrics by id
-     */
-    confirmationMetricsById: PropTypes.object,
-
-    /**
-     * Object containing blockaid validation response for confirmation
-     */
-    securityAlertResponse: PropTypes.object,
-
-    /**
-     * Object containing simulation data
-     */
-    simulationData: PropTypes.object,
-  };
-
-  state = {
+  state: ApprovalState = {
     mode: REVIEW,
     transactionHandled: false,
     transactionConfirmed: false,
     isChangeInSimulationModalOpen: false,
   };
-
-  originIsWalletConnect = false;
-  originIsMMSDKRemoteConn = false;
 
   updateNavBar = () => {
     const colors = this.context.colors || mockTheme.colors;
@@ -211,7 +169,7 @@ class Approval extends PureComponent {
     }
   };
 
-  isTxStatusCancellable = (transaction) => {
+  isTxStatusCancellable = (transaction: any) => {
     if (
       transaction?.status === TX_SUBMITTED ||
       transaction?.status === TX_REJECTED ||
@@ -224,7 +182,7 @@ class Approval extends PureComponent {
     return true;
   };
 
-  handleAppStateChange = (appState) => {
+  handleAppStateChange = (appState: string) => {
     try {
       if (appState !== 'active') {
         const { transaction, transactions } = this.props;
@@ -375,7 +333,7 @@ class Approval extends PureComponent {
       : {};
   };
 
-  getAnalyticsParams = ({ gasEstimateType, gasSelected } = {}) => {
+  getAnalyticsParams = ({ gasEstimateType, gasSelected }: any = {}) => {
     const { chainId, transaction, selectedAddress, shouldUseSmartTransaction } =
       this.props;
 
@@ -432,7 +390,7 @@ class Approval extends PureComponent {
     this.props.resetTransaction();
   };
 
-  showWalletConnectNotification = (confirmation = false) => {
+  showWalletConnectNotification = (confirmation: boolean = false) => {
     const { transaction } = this.props;
     InteractionManager.runAfterInteractions(() => {
       transaction.origin &&
@@ -464,7 +422,7 @@ class Approval extends PureComponent {
     );
   };
 
-  onLedgerConfirmation = (approve, transactionId, gaParams) => {
+  onLedgerConfirmation = (approve: boolean, transactionId: string, gaParams: any) => {
     try {
       //manual cancel from UI when transaction is awaiting from ledger confirmation
       if (!approve) {
@@ -499,7 +457,7 @@ class Approval extends PureComponent {
   /**
    * Callback on confirm transaction
    */
-  onConfirm = async ({ gasEstimateType, EIP1559GasData, gasSelected }) => {
+  onConfirm = async ({ gasEstimateType, EIP1559GasData, gasSelected }: any) => {
     const { KeyringController, ApprovalController } = Engine.context;
     const {
       transactions,
@@ -665,7 +623,7 @@ class Approval extends PureComponent {
    *
    * @param mode - Transaction mode, review or edit
    */
-  onModeChange = (mode) => {
+  onModeChange = (mode: string) => {
     const { navigation } = this.props;
     navigation && navigation.setParams({ mode });
     this.setState({ mode });
@@ -682,7 +640,7 @@ class Approval extends PureComponent {
    * @param {object} transaction - Transaction object
    * @param {object} selectedAsset - Asset object
    */
-  prepareTransaction = ({ EIP1559GasData, gasEstimateType }) => {
+  prepareTransaction = ({ EIP1559GasData, gasEstimateType }: any) => {
     const { transaction: rawTransaction, showCustomNonce } = this.props;
     const { assetType, gas, gasPrice, selectedAsset } = rawTransaction;
 
@@ -774,11 +732,9 @@ const mapStateToProps = (state) => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: any) => ({
   resetTransaction: () => dispatch(resetTransaction()),
 });
-
-Approval.contextType = ThemeContext;
 
 export default connect(
   mapStateToProps,
