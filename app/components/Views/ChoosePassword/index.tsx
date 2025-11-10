@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   ActivityIndicator,
   Alert,
@@ -194,53 +193,42 @@ const createStyles = (colors) =>
 
 const PASSCODE_NOT_SET_ERROR = 'Error: Passcode not set.';
 
+interface ChoosePasswordProps {
+  navigation: any;
+  passwordSet: () => void;
+  passwordUnset: () => void;
+  setLockTime: (time: number) => void;
+  seedphraseNotBackedUp: () => void;
+  setExistingUser: (value: boolean) => void;
+  saveOnboardingEvent: (...eventArgs: any[]) => void;
+  route: any;
+  metrics: any;
+}
+
+interface ChoosePasswordState {
+  isSelected: boolean;
+  password: string;
+  confirmPassword: string;
+  secureTextEntry: boolean;
+  biometryType: string | null;
+  biometryChoice: boolean;
+  rememberMe: boolean;
+  loading: boolean;
+  error: string | null;
+  errorToThrow: Error | null;
+  inputWidth: { width: string };
+  showPasswordIndex: number[];
+  passwordInputContainerFocusedIndex: number;
+}
+
 /**
  * View where users can set their password for the first time
  */
-class ChoosePassword extends PureComponent {
-  static propTypes = {
-    /**
-     * The navigator object
-     */
-    navigation: PropTypes.object,
-    /**
-     * The action to update the password set flag
-     * in the redux store
-     */
-    passwordSet: PropTypes.func,
-    /**
-     * The action to update the password set flag
-     * in the redux store to false
-     */
-    passwordUnset: PropTypes.func,
-    /**
-     * The action to update the lock time
-     * in the redux store
-     */
-    setLockTime: PropTypes.func,
-    /**
-     * Action to reset the flag seedphraseBackedUp in redux
-     */
-    seedphraseNotBackedUp: PropTypes.func,
-    /**
-     * Action to set existing user flag
-     */
-    setExistingUser: PropTypes.func,
-    /**
-     * Action to save onboarding event
-     */
-    saveOnboardingEvent: PropTypes.func,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class ChoosePassword extends PureComponent<ChoosePasswordProps, ChoosePasswordState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: ChoosePasswordState = {
     isSelected: false,
     password: '',
     confirmPassword: '',
@@ -257,13 +245,13 @@ class ChoosePassword extends PureComponent {
   };
 
   mounted = true;
-  passwordSetupAttemptTraceCtx = null;
+  passwordSetupAttemptTraceCtx: any = null;
 
-  confirmPasswordInput = React.createRef();
+  confirmPasswordInput = React.createRef<any>();
   // Flag to know if password in keyring was set or not
   keyringControllerPasswordSet = false;
 
-  track = (event, properties) => {
+  track = (event: any, properties: any) => {
     const eventBuilder = MetricsEventBuilder.createEventBuilder(event);
     eventBuilder.addProperties(properties);
     trackOnboarding(eventBuilder.build(), this.props.saveOnboardingEvent);
@@ -351,7 +339,7 @@ class ChoosePassword extends PureComponent {
     this.termsOfUse();
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: ChoosePasswordProps, prevState: ChoosePasswordState) {
     this.updateNavBar();
     const prevLoading = prevState.loading;
     const { loading } = this.state;
@@ -372,12 +360,12 @@ class ChoosePassword extends PureComponent {
     }
   }
 
-  isOAuthPasswordCreationError = (error, authType) =>
+  isOAuthPasswordCreationError = (error: any, authType: any) =>
     authType.oauth2Login &&
     error.message &&
     error.message.includes('SeedlessOnboardingController');
 
-  handleOAuthPasswordCreationError = (error, authType) => {
+  handleOAuthPasswordCreationError = (error: any, authType: any) => {
     // If user has already consented to analytics, report error using regular Sentry
     if (this.props.metrics.isEnabled()) {
       authType.oauth2Login &&
@@ -405,7 +393,7 @@ class ChoosePassword extends PureComponent {
     this.setState(() => ({ isSelected: !isSelected }));
   };
 
-  tryExportSeedPhrase = async (password) => {
+  tryExportSeedPhrase = async (password: string) => {
     const { KeyringController } = Engine.context;
     const uint8ArrayMnemonic = await KeyringController.exportSeedPhrase(
       password,
@@ -595,7 +583,7 @@ class ChoosePassword extends PureComponent {
    *
    * @param password - Password to recreate and set the vault with
    */
-  recreateVault = async (password, authType) => {
+  recreateVault = async (password: string, authType?: any) => {
     const { KeyringController } = Engine.context;
     const seedPhrase = await this.getSeedPhrase();
     let importedAccounts = [];
@@ -1032,18 +1020,16 @@ class ChoosePassword extends PureComponent {
   }
 }
 
-ChoosePassword.contextType = ThemeContext;
-
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: any) => ({
   passwordSet: () => dispatch(passwordSet()),
   passwordUnset: () => dispatch(passwordUnset()),
-  setLockTime: (time) => dispatch(setLockTime(time)),
+  setLockTime: (time: number) => dispatch(setLockTime(time)),
   seedphraseNotBackedUp: () => dispatch(seedphraseNotBackedUp()),
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-  setExistingUser: (value) => dispatch(setExistingUser(value)),
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+  setExistingUser: (value: boolean) => dispatch(setExistingUser(value)),
 });
 
-const mapStateToProps = (state) => ({});
+const mapStateToProps = (state: any) => ({});
 
 export default connect(
   mapStateToProps,
