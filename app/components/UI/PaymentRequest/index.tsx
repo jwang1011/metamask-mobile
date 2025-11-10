@@ -337,26 +337,6 @@ class PaymentRequest extends PureComponent<PaymentRequestProps, PaymentRequestSt
     }, 300);
   }
 
-  /**
-   * Handle token search based on user input
-   * debounced by 300ms to prevent calls on every keystroke
-   *
-   * @param {string} searchInputValue - String containing assets query
-   */
-  debouncedTokenSearchMethod = (searchInputValue: string) => {
-    const { tokenList } = this.props;
-    if (typeof searchInputValue !== 'string') {
-      searchInputValue = this.state.searchInputValue;
-    }
-
-    const fuseSearchResult = fuse.search(searchInputValue);
-    const addressSearchResult = tokenList.filter((token) =>
-      toLowerCaseEquals(token.address, searchInputValue),
-    );
-    const results = [...addressSearchResult, ...fuseSearchResult];
-    this.setState({ results });
-  }, 300);
-
   updateNavBar = () => {
     const { navigation, route } = this.props;
     const colors = this.context.colors || mockTheme.colors;
