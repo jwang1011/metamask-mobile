@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
 import {
   StyleSheet,
   TextInput,
@@ -15,7 +14,7 @@ import Modal from 'react-native-modal';
 import Icon from 'react-native-vector-icons/Ionicons';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
 import Fuse from 'fuse.js';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { isValidAddress } from 'ethereumjs-util';
 
 import Device from '../../../../util/device';
@@ -53,7 +52,43 @@ import { QuoteViewSelectorIDs } from '../../../../../e2e/selectors/swaps/QuoteVi
 import { getDecimalChainId } from '../../../../util/networks';
 import { getSortedTokensByFiatValue } from '../utils/token-list-utils';
 
-const createStyles = (colors) =>
+interface Token {
+  address: string;
+  symbol: string;
+  name?: string;
+  iconUrl?: string;
+  balance?: string;
+  balanceFiat?: string;
+  decimals?: number;
+}
+
+interface TokenSelectModalOwnProps {
+  isVisible: boolean;
+  dismiss: () => void;
+  title: string;
+  tokens: Token[];
+  initialTokens: Token[];
+  onItemPress: (item: Token) => void;
+  excludeAddresses?: string[];
+}
+
+const mapStateToProps = (state: any) => ({
+  accounts: selectAccounts(state),
+  conversionRate: selectConversionRate(state),
+  currentCurrency: selectCurrentCurrency(state),
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  tokenExchangeRates: selectContractExchangeRates(state),
+  balances: selectContractBalances(state),
+  chainId: selectEvmChainId(state),
+  networkConfigurations: selectEvmNetworkConfigurationsByChainId(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TokenSelectModalProps = PropsFromRedux & TokenSelectModalOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     modal: {
       margin: 0,
@@ -130,7 +165,7 @@ const createStyles = (colors) =>
 
 const MAX_TOKENS_RESULTS = 20;
 
-function TokenSelectModal({
+const TokenSelectModal: React.FC<TokenSelectModalProps> = ({
   isVisible,
   dismiss,
   title,
@@ -146,12 +181,12 @@ function TokenSelectModal({
   chainId,
   networkConfigurations,
   balances,
-}) {
+}) => {
   const navigation = useNavigation();
   const { trackEvent, createEventBuilder } = useMetrics();
 
-  const searchInput = useRef(null);
-  const list = useRef();
+  const searchInput = useRef<TextInput>(null);
+  const list = useRef<FlatList>(null);
   const [searchString, setSearchString] = useState('');
   const explorer = useBlockExplorer(networkConfigurations);
   const [isTokenImportVisible, , showTokenImportModal, hideTokenImportModal] =
@@ -285,7 +320,7 @@ function TokenSelectModal({
   }, [showTokenImportModal]);
 
   const handlePressImportToken = useCallback(
-    (item) => {
+    (item: Token) => {
       const { address, symbol } = item;
       trackEvent(
         createEventBuilder(MetaMetricsEvents.CUSTOM_TOKEN_IMPORTED)
@@ -368,7 +403,7 @@ function TokenSelectModal({
     [searchString, styles],
   );
 
-  const handleSearchTextChange = useCallback((text) => {
+  const handleSearchTextChange = useCallback((text: string) => {
     setSearchString(text);
     if (list.current) list.current.scrollToOffset({ animated: false, y: 0 });
   }, []);
@@ -507,59 +542,6 @@ function TokenSelectModal({
       </SafeAreaView>
     </Modal>
   );
-}
-
-TokenSelectModal.propTypes = {
-  isVisible: PropTypes.bool,
-  dismiss: PropTypes.func,
-  title: PropTypes.string,
-  tokens: PropTypes.arrayOf(PropTypes.object),
-  initialTokens: PropTypes.arrayOf(PropTypes.object),
-  onItemPress: PropTypes.func,
-  excludeAddresses: PropTypes.arrayOf(PropTypes.string),
-  /**
-   * ETH to current currency conversion rate
-   */
-  conversionRate: PropTypes.number,
-  /**
-   * Map of accounts to information objects including balances
-   */
-  accounts: PropTypes.object,
-  /**
-   * Currency code of the currently-active currency
-   */
-  currentCurrency: PropTypes.string,
-  /**
-   * A string that represents the selected address
-   */
-  selectedAddress: PropTypes.string,
-  /**
-   * An object containing token balances for current account and network in the format address => balance
-   */
-  balances: PropTypes.object,
-  /**
-   * An object containing token exchange rates in the format address => exchangeRate
-   */
-  tokenExchangeRates: PropTypes.object,
-  /**
-   * Chain Id
-   */
-  chainId: PropTypes.string,
-  /**
-   * Network configurations
-   */
-  networkConfigurations: PropTypes.object,
 };
 
-const mapStateToProps = (state) => ({
-  accounts: selectAccounts(state),
-  conversionRate: selectConversionRate(state),
-  currentCurrency: selectCurrentCurrency(state),
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  tokenExchangeRates: selectContractExchangeRates(state),
-  balances: selectContractBalances(state),
-  chainId: selectEvmChainId(state),
-  networkConfigurations: selectEvmNetworkConfigurationsByChainId(state),
-});
-
-export default connect(mapStateToProps)(TokenSelectModal);
+export default connector(TokenSelectModal);
