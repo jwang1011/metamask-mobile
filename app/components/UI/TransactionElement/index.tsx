@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   TouchableOpacity,
   TouchableHighlight,
@@ -57,7 +56,45 @@ import { selectConversionRateByChainId } from '../../../selectors/currencyRateCo
 import { selectContractExchangeRatesByChainId } from '../../../selectors/tokenRatesController';
 import { selectTokensByChainIdAndAddress } from '../../../selectors/tokensController';
 
-const createStyles = (colors, typography) =>
+interface TransactionElementProps {
+  assetSymbol?: string;
+  tx: any;
+  selectedInternalAccount: any;
+  i: number;
+  onPressItem: (id: string, index: number) => void;
+  onSpeedUpAction: (show: boolean, existingGas?: any, tx?: any) => void;
+  onCancelAction: (show: boolean, existingGas?: any, tx?: any) => void;
+  swapsTransactions: any;
+  swapsTokens: any[];
+  signQRTransaction?: (tx: any) => void;
+  cancelUnsignedQRTransaction?: (tx: any) => void;
+  isQRHardwareAccount?: boolean;
+  isLedgerAccount?: boolean;
+  signLedgerTransaction?: (tx: any) => void;
+  bridgeTxHistoryData: any;
+  txChainId: string;
+  ticker: string;
+  navigation: {
+    navigate: (screen: string, params?: any) => void;
+  };
+}
+
+interface TransactionElementState {
+  actionKey?: string;
+  cancelIsOpen: boolean;
+  speedUpIsOpen: boolean;
+  detailsModalVisible: boolean;
+  importModalVisible: boolean;
+  transactionGas: {
+    gasBN?: any;
+    gasPriceBN?: any;
+    gasTotal?: any;
+  };
+  transactionElement?: any;
+  transactionDetails?: any;
+}
+
+const createStyles = (colors: any, typography: any) =>
   StyleSheet.create({
     row: {
       backgroundColor: colors.background.default,
@@ -146,58 +183,13 @@ const transactionIconSwapFailed = require('../../../images/transaction-icons/swa
 /**
  * View that renders a transaction item part of transactions list
  */
-class TransactionElement extends PureComponent {
-  static propTypes = {
-    assetSymbol: PropTypes.string,
-    /**
-     * Asset object (in this case ERC721 token)
-     */
-    tx: PropTypes.object,
-    /**
-    /* InternalAccount object required to get import time name
-    */
-    selectedInternalAccount: PropTypes.object,
-    /**
-     * Current element of the list index
-     */
-    i: PropTypes.number,
-    /**
-     * Callback to render transaction details view
-     */
-    onPressItem: PropTypes.func,
-    /**
-     * Callback to speed up tx
-     */
-    onSpeedUpAction: PropTypes.func,
-    /**
-     * Callback to cancel tx
-     */
-    onCancelAction: PropTypes.func,
-    swapsTransactions: PropTypes.object,
-    swapsTokens: PropTypes.arrayOf(PropTypes.object),
-    signQRTransaction: PropTypes.func,
-    cancelUnsignedQRTransaction: PropTypes.func,
-    isQRHardwareAccount: PropTypes.bool,
-    isLedgerAccount: PropTypes.bool,
-    signLedgerTransaction: PropTypes.func,
-    bridgeTxHistoryData: PropTypes.object,
-    /**
-     * Chain Id
-     */
-    txChainId: PropTypes.string,
-    /**
-     * Ticker
-     */
-    ticker: PropTypes.string,
-    /**
-     * Navigation object for routing
-     */
-    navigation: PropTypes.shape({
-      navigate: PropTypes.func.isRequired,
-    }).isRequired,
-  };
+class TransactionElement extends PureComponent<TransactionElementProps, TransactionElementState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  mounted: boolean = false;
+
+  state: TransactionElementState = {
     actionKey: undefined,
     cancelIsOpen: false,
     speedUpIsOpen: false,
@@ -212,8 +204,6 @@ class TransactionElement extends PureComponent {
     transactionDetails: undefined,
   };
 
-  mounted = false;
-
   componentDidMount = async () => {
     const [transactionElement, transactionDetails] = await decodeTransaction({
       ...this.props,
@@ -227,7 +217,7 @@ class TransactionElement extends PureComponent {
     this.mounted && this.setState({ transactionElement, transactionDetails });
   };
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: TransactionElementProps) {
     if (
       prevProps.txChainId !== this.props.txChainId ||
       prevProps.swapsTransactions !== this.props.swapsTransactions ||
@@ -319,7 +309,7 @@ class TransactionElement extends PureComponent {
     return null;
   };
 
-  renderTxElementIcon = (transactionElement, status, chainId) => {
+  renderTxElementIcon = (transactionElement: any, status: string, chainId: string) => {
     const { transactionType } = transactionElement;
     const { colors, typography } = this.context || mockTheme;
     const styles = createStyles(colors, typography);
@@ -383,7 +373,7 @@ class TransactionElement extends PureComponent {
    *
    * @param {object} transactionElement - Transaction information to render, containing addressTo, actionKey, value, fiatValue, contractDeployment
    */
-  renderTxElement = (transactionElement) => {
+  renderTxElement = (transactionElement: any) => {
     const {
       selectedInternalAccount,
       isQRHardwareAccount,
@@ -697,7 +687,7 @@ class TransactionElement extends PureComponent {
   }
 }
 
-const mapStateToProps = (state, ownProps) => ({
+const mapStateToProps = (state: any, ownProps: any) => ({
   selectedInternalAccount: selectSelectedInternalAccount(state),
   primaryCurrency: selectPrimaryCurrency(state),
   swapsTransactions: selectSwapsTransactions(state),
@@ -711,19 +701,13 @@ const mapStateToProps = (state, ownProps) => ({
   tokens: selectTokensByChainIdAndAddress(state, ownProps.txChainId),
 });
 
-TransactionElement.contextType = ThemeContext;
-
 // Create a wrapper functional component
-const TransactionElementWithBridge = (props) => {
+const TransactionElementWithBridge: React.FC<{ tx: any; [key: string]: any }> = (props) => {
   const bridgeTxHistoryData = useBridgeTxHistoryData({ evmTxMeta: props.tx });
 
   return (
     <TransactionElement {...props} bridgeTxHistoryData={bridgeTxHistoryData} />
   );
-};
-
-TransactionElementWithBridge.propTypes = {
-  tx: PropTypes.object.isRequired,
 };
 
 export default connect(mapStateToProps)(TransactionElementWithBridge);
