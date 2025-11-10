@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import {
   ScrollView,
@@ -7,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import ActionSheet from '@metamask/react-native-actionsheet';
 import { fontStyles } from '../../../../styles/common';
 import CustomText from '../../../../components/Base/Text';
@@ -52,7 +51,30 @@ import { SolScope } from '@metamask/keyring-api';
 import { selectNonEvmNetworkConfigurationsByChainId } from '../../../../selectors/multichainNetworkController';
 ///: END:ONLY_INCLUDE_IF
 
-const createStyles = (colors) =>
+interface NetworksSettingsOwnProps {
+  navigation: any;
+}
+
+const mapStateToProps = (state: any) => ({
+  providerConfig: selectProviderConfig(state),
+  networkConfigurations: selectEvmNetworkConfigurationsByChainId(state),
+  ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+  nonEvmNetworkConfigurations:
+    selectNonEvmNetworkConfigurationsByChainId(state),
+  ///: END:ONLY_INCLUDE_IF
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type NetworksSettingsProps = PropsFromRedux & NetworksSettingsOwnProps;
+
+interface NetworksSettingsState {
+  searchString: string;
+  filteredNetworks: any[];
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: colors.background.default,
@@ -127,32 +149,14 @@ const createStyles = (colors) =>
 /**
  * Main view for app configurations
  */
-class NetworksSettings extends PureComponent {
-  static propTypes = {
-    /**
-     * Network configurations
-     */
-    networkConfigurations: PropTypes.object,
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * Current network provider configuration
-     */
-    providerConfig: PropTypes.object,
-    ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
-    /**
-     * Non evm network configurations
-     */
-    nonEvmNetworkConfigurations: PropTypes.object,
-    ///: END:ONLY_INCLUDE_IF
-  };
+class NetworksSettings extends PureComponent<NetworksSettingsProps, NetworksSettingsState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  actionSheet = null;
-  networkToRemove = null;
+  actionSheet: any = null;
+  networkToRemove: string | null = null;
 
-  state = {
+  state: NetworksSettingsState = {
     searchString: '',
     filteredNetworks: [],
   };
@@ -174,7 +178,7 @@ class NetworksSettings extends PureComponent {
     this.updateNavBar();
   };
 
-  componentDidUpdate = (prevProps) => {
+  componentDidUpdate = (prevProps: NetworksSettingsProps) => {
     if (this.props.networkConfigurations !== prevProps.networkConfigurations) {
       this.handleSearchTextChange(this.state.searchString);
     }
@@ -182,7 +186,7 @@ class NetworksSettings extends PureComponent {
     this.updateNavBar();
   };
 
-  onNetworkPress = (networkTypeOrRpcUrl) => {
+  onNetworkPress = (networkTypeOrRpcUrl: string) => {
     const { navigation } = this.props;
     navigation.navigate(Routes.ADD_NETWORK, {
       network: networkTypeOrRpcUrl,
@@ -194,7 +198,7 @@ class NetworksSettings extends PureComponent {
     navigation.navigate(Routes.ADD_NETWORK);
   };
 
-  showRemoveMenu = (networkTypeOrRpcUrl) => {
+  showRemoveMenu = (networkTypeOrRpcUrl: string) => {
     this.networkToRemove = networkTypeOrRpcUrl;
     this.actionSheet.show();
   };
@@ -251,13 +255,13 @@ class NetworksSettings extends PureComponent {
     this.setState({ filteredNetworks: [] });
   };
 
-  createActionSheetRef = (ref) => {
+  createActionSheetRef = (ref: any) => {
     this.actionSheet = ref;
   };
 
-  onActionSheetPress = (index) => (index === 0 ? this.removeNetwork() : null);
+  onActionSheetPress = (index: number) => (index === 0 ? this.removeNetwork() : null);
 
-  networkElement(name, image, i, networkTypeOrRpcUrl, isCustomRPC, color) {
+  networkElement(name: string, image: any, i: number, networkTypeOrRpcUrl: string, isCustomRPC: boolean, color?: string) {
     const colors = this.context.colors || mockTheme.colors;
     const styles = createStyles(colors);
     return (
@@ -326,7 +330,7 @@ class NetworksSettings extends PureComponent {
    *
    * @param {string[]} excludedChainIds
    */
-  renderRpcNetworks = (excludedChainIds) => {
+  renderRpcNetworks = (excludedChainIds: string[]) => {
     const { networkConfigurations } = this.props;
     return Object.values(networkConfigurations).map(
       (
@@ -386,7 +390,7 @@ class NetworksSettings extends PureComponent {
   /**
    * @param {string | undefined} mainnetNetwork - used to render a specific mainnet network
    */
-  renderMainnetNetworks(mainnetNetwork) {
+  renderMainnetNetworks(mainnetNetwork?: string) {
     const networkKeys = mainnetNetwork
       ? [mainnetNetwork]
       : getMainnetNetworks();
@@ -463,7 +467,7 @@ class NetworksSettings extends PureComponent {
     );
   }
   ///: END:ONLY_INCLUDE_IF
-  handleSearchTextChange = (text) => {
+  handleSearchTextChange = (text: string) => {
     this.setState({ searchString: text });
     const defaultNetwork = getAllNetworks().map((networkType, i) => {
       const { color, name, chainId } = Networks[networkType];
@@ -603,15 +607,4 @@ class NetworksSettings extends PureComponent {
   }
 }
 
-NetworksSettings.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
-  providerConfig: selectProviderConfig(state),
-  networkConfigurations: selectEvmNetworkConfigurationsByChainId(state),
-  ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
-  nonEvmNetworkConfigurations:
-    selectNonEvmNetworkConfigurationsByChainId(state),
-  ///: END:ONLY_INCLUDE_IF
-});
-
-export default connect(mapStateToProps)(NetworksSettings);
+export default connector(NetworksSettings);
