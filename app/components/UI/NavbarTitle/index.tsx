@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
 import Networks, { getDecimalChainId } from '../../../util/networks';
 import { strings } from '../../../../locales/i18n';
@@ -20,7 +19,17 @@ import Text, {
 import { selectNetworkName } from '../../../selectors/networkInfos';
 import { NETWORK_SELECTOR_SOURCE_VALUES } from '../../../constants/networkSelector';
 
-const createStyles = (colors) =>
+interface NavbarTitleOwnProps {
+  title?: string;
+  translate?: boolean;
+  disableNetwork?: boolean;
+  showSelectedNetwork?: boolean;
+  networkName?: string;
+  children?: React.ReactNode;
+  source?: typeof NETWORK_SELECTOR_SOURCE_VALUES[number];
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       justifyContent: 'center',
@@ -32,66 +41,27 @@ const createStyles = (colors) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  providerConfig: selectProviderConfig(state),
+  chainId: selectChainId(state),
+  selectedNetworkName: selectNetworkName(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type NavbarTitleProps = PropsFromRedux & NavbarTitleOwnProps & {
+  navigation: any;
+  metrics: any;
+};
+
 /**
  * UI PureComponent that renders inside the navbar
  * showing the view title and the selected network
  */
-class NavbarTitle extends PureComponent {
-  static propTypes = {
-    /**
-     * Object representing the configuration of the current selected network
-     */
-    providerConfig: PropTypes.object.isRequired,
-    /**
-     * Name of the current view
-     */
-    title: PropTypes.string,
-    /**
-     * Boolean that specifies if the title needs translation
-     */
-    translate: PropTypes.bool,
-    /**
-     * Boolean that specifies if the network can be changed
-     */
-    disableNetwork: PropTypes.bool,
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-    /**
-     * Boolean that specifies if the network selected is displayed
-     */
-    showSelectedNetwork: PropTypes.bool,
-    /**
-     * Name of the network to display
-     */
-    networkName: PropTypes.string,
-    /**
-     * Content to display inside text element
-     */
-    children: PropTypes.node,
-    /**
-     * Selected multichain chainId
-     */
-    chainId: PropTypes.string,
-    /**
-     * Selected network name
-     */
-    selectedNetworkName: PropTypes.string,
-    /**
-     * Source of the network selector
-     */
-    source: PropTypes.oneOf(NETWORK_SELECTOR_SOURCE_VALUES),
-  };
-
-  static defaultProps = {
-    translate: true,
-    showSelectedNetwork: true,
-  };
+class NavbarTitle extends PureComponent<NavbarTitleProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   animating = false;
 
@@ -127,8 +97,8 @@ class NavbarTitle extends PureComponent {
     const {
       providerConfig,
       title,
-      translate,
-      showSelectedNetwork,
+      translate = true,
+      showSelectedNetwork = true,
       children,
       networkName,
       selectedNetworkName,
@@ -182,14 +152,6 @@ class NavbarTitle extends PureComponent {
   };
 }
 
-NavbarTitle.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
-  providerConfig: selectProviderConfig(state),
-  chainId: selectChainId(state),
-  selectedNetworkName: selectNetworkName(state),
-});
-
 export default withNavigation(
-  connect(mapStateToProps)(withMetricsAwareness(NavbarTitle)),
+  connector(withMetricsAwareness(NavbarTitle)),
 );
