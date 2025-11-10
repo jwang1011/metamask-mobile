@@ -1,6 +1,5 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import PropTypes from 'prop-types';
 import { fontStyles, baseStyles } from '../../../../styles/common';
 import MaterialIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AnimatedSpinner from '../../AnimatedSpinner';
@@ -11,7 +10,22 @@ import Text from '../../../Base/Text';
 import { useTheme } from '../../../../util/theme';
 import { ToastSelectorsIDs } from '../../../../../e2e/selectors/wallet/ToastModal.selectors';
 
-const createStyles = (colors) =>
+interface BaseNotificationProps {
+  status: string;
+  data?: {
+    nonce?: string;
+    amount?: string | null;
+    assetType?: string;
+    type?: string | null;
+    title?: string | null;
+    description?: string | null;
+  };
+  onPress?: () => void;
+  onHide?: () => void;
+  autoDismiss?: boolean;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     floatingBackground: {
       backgroundColor: colors.background.default,
@@ -60,7 +74,7 @@ const createStyles = (colors) =>
     },
   });
 
-export const getIcon = (status, colors, styles) => {
+export const getIcon = (status: string, colors: any, styles: any) => {
   switch (status) {
     case 'pending':
     case 'pending_withdrawal':
@@ -121,7 +135,7 @@ export const getIcon = (status, colors, styles) => {
   }
 };
 
-const getTitle = (status, { nonce, amount, assetType }) => {
+const getTitle = (status: string, { nonce, amount, assetType }: any) => {
   switch (status) {
     case 'pending':
       return strings('notifications.pending_title');
@@ -151,7 +165,7 @@ const getTitle = (status, { nonce, amount, assetType }) => {
   }
 };
 
-export const getDescription = (status, { amount = null, type = null }) => {
+export const getDescription = (status: string, { amount = null, type = null }: any) => {
   if (amount && typeof amount !== 'object' && type) {
     return strings(`notifications.${type}_${status}_message`, { amount });
   }
@@ -161,14 +175,14 @@ export const getDescription = (status, { amount = null, type = null }) => {
 /**
  * BaseNotification component used to render in-app notifications
  */
-const BaseNotification = ({
+const BaseNotification: React.FC<BaseNotificationProps> = ({
   status,
-  data = null,
-  data: { description = null, title = null },
+  data = {},
   onPress,
   onHide,
-  autoDismiss,
+  autoDismiss = false,
 }) => {
+  const { description = null, title = null } = data;
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -205,18 +219,6 @@ const BaseNotification = ({
       </View>
     </View>
   );
-};
-
-BaseNotification.propTypes = {
-  status: PropTypes.string,
-  data: PropTypes.object,
-  onPress: PropTypes.func,
-  onHide: PropTypes.func,
-  autoDismiss: PropTypes.bool,
-};
-
-BaseNotification.defaultProps = {
-  autoDismiss: false,
 };
 
 export default BaseNotification;

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, Text, Dimensions } from 'react-native';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
+import { connect, ConnectedProps } from 'react-redux';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { strings } from '../../../../../locales/i18n';
 import Engine from '../../../../core/Engine';
@@ -43,7 +42,20 @@ const WINDOW_WIDTH = Dimensions.get('window').width;
 const ACTION_CANCEL = 'cancel';
 const ACTION_SPEEDUP = 'speedup';
 
-const createStyles = (colors) =>
+interface TransactionNotificationOwnProps {
+  isInBrowserView?: boolean;
+  notificationAnimated: any;
+  onClose: () => void;
+  animatedTimingStart: (animated: any, value: number) => void;
+  currentNotification: {
+    status: string;
+    transaction: {
+      id: string;
+    };
+  };
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     absoluteFill: {
       ...StyleSheet.absoluteFillObject,
@@ -103,7 +115,51 @@ const createStyles = (colors) =>
     },
   });
 
-function TransactionNotification(props) {
+const mapStateToProps = (state: any, ownProps: TransactionNotificationOwnProps) => {
+  const chainId = selectChainId(state);
+
+  const {
+    SmartTransactionsController,
+    TransactionController,
+    SwapsController,
+  } = state.engine.backgroundState;
+
+  const smartTransactions =
+    SmartTransactionsController?.smartTransactionsState?.smartTransactions?.[
+      chainId
+    ] || [];
+
+  const tx = TransactionController.transactions.find(
+    ({ id }: any) => id === ownProps?.currentNotification.transaction.id,
+  );
+
+  const ticker = isPerDappSelectedNetworkEnabled()
+    ? selectTickerByChainId(state, tx?.chainId)
+    : selectEvmTicker(state);
+  return {
+    accounts: selectAccounts(state),
+    selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+    transactions: TransactionController.transactions,
+    ticker,
+    chainId,
+    tokens: selectTokensByAddress(state),
+    collectibleContracts: collectibleContractsSelector(state),
+    contractExchangeRates: selectContractExchangeRates(state),
+    conversionRate: selectConversionRate(state),
+    currentCurrency: selectCurrentCurrency(state),
+    primaryCurrency: state.settings.primaryCurrency,
+    swapsTransactions: TransactionController.swapsTransactions || {},
+    swapsTokens: SwapsController.tokens,
+    smartTransactions,
+  };
+};
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TransactionNotificationProps = PropsFromRedux & TransactionNotificationOwnProps;
+
+function TransactionNotification(props: TransactionNotificationProps) {
   const {
     accounts,
     currentNotification,
@@ -138,7 +194,7 @@ function TransactionNotification(props) {
   }, [setTransactionDetailsIsVisible, animatedTimingStart, detailsAnimated]);
 
   const animateActionTo = useCallback(
-    (position) => {
+    (position: number) => {
       animatedTimingStart(detailsYAnimated, position);
       animatedTimingStart(actionXAnimated, position);
     },
@@ -195,7 +251,7 @@ function TransactionNotification(props) {
   );
 
   const safelyExecute = useCallback(
-    (callback) => {
+    (callback: () => void) => {
       try {
         callback();
       } catch (e) {
@@ -219,7 +275,7 @@ function TransactionNotification(props) {
   useEffect(() => {
     async function getTransactionInfo() {
       const tx = transactions.find(
-        ({ id }) => id === currentNotification.transaction.id,
+        ({ id }: any) => id === currentNotification.transaction.id,
       );
 
       if (!tx) return;
@@ -282,7 +338,7 @@ function TransactionNotification(props) {
   // Don't show submitted notification for STX b/c we only know when it's confirmed,
   // o/w a submitted notification will show up after it's confirmed, then a confirmed notification will show up immediately after
   if (tx.status === 'submitted') {
-    const smartTx = smartTransactions.find((stx) => stx.txHash === tx.hash);
+    const smartTx = smartTransactions.find((stx: any) => stx.txHash === tx.hash);
     if (smartTx) {
       return null;
     }
@@ -372,107 +428,4 @@ function TransactionNotification(props) {
   );
 }
 
-TransactionNotification.propTypes = {
-  isInBrowserView: PropTypes.bool,
-  notificationAnimated: PropTypes.object,
-  onClose: PropTypes.func,
-  animatedTimingStart: PropTypes.func,
-  currentNotification: PropTypes.object,
-  swapsTransactions: PropTypes.object,
-  swapsTokens: PropTypes.array,
-  /**
-   * Map of accounts to information objects including balances
-   */
-  accounts: PropTypes.object,
-  /**
-   * An array that represents the user transactions on chain
-   */
-  transactions: PropTypes.array,
-  /**
-   * An array that represents the user smart transactions on chain
-   */
-  smartTransactions: PropTypes.array,
-
-  /**
-   * String of selected address
-   */
-  selectedAddress: PropTypes.string,
-  /**
-   * Current provider ticker
-   */
-  ticker: PropTypes.string,
-  /**
-   * Current provider chainId
-   */
-  chainId: PropTypes.string,
-  /**
-   * ETH to current currency conversion rate
-   */
-  conversionRate: PropTypes.number,
-  /**
-   * Currency code of the currently-active currency
-   */
-  currentCurrency: PropTypes.string,
-  /**
-   * Current exchange rate
-   */
-  exchangeRate: PropTypes.number,
-  /**
-   * Object containing token exchange rates in the format address => exchangeRate
-   */
-  contractExchangeRates: PropTypes.object,
-  /**
-   * An array that represents the user collectible contracts
-   */
-  collectibleContracts: PropTypes.array,
-  /**
-   * An array that represents the user tokens
-   */
-  tokens: PropTypes.object,
-
-  /**
-   * Primary currency, either ETH or Fiat
-   */
-  primaryCurrency: PropTypes.string,
-};
-
-const mapStateToProps = (state, ownProps) => {
-  const chainId = selectChainId(state);
-
-  const {
-    SmartTransactionsController,
-    TransactionController,
-    SwapsController,
-  } = state.engine.backgroundState;
-
-  const smartTransactions =
-    SmartTransactionsController?.smartTransactionsState?.smartTransactions?.[
-      chainId
-    ] || [];
-
-  const tx = TransactionController.transactions.find(
-    ({ id }) => id === ownProps?.currentNotification.transaction.id,
-  );
-
-  const ticker = isPerDappSelectedNetworkEnabled()
-    ? selectTickerByChainId(state, tx?.chainId)
-    : selectEvmTicker(state);
-  return {
-    accounts: selectAccounts(state),
-    selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-    transactions: TransactionController.transactions,
-    ticker,
-    chainId,
-    tokens: selectTokensByAddress(state),
-    collectibleContracts: collectibleContractsSelector(state),
-    contractExchangeRates: selectContractExchangeRates(state),
-    conversionRate: selectConversionRate(state),
-    currentCurrency: selectCurrentCurrency(state),
-    primaryCurrency: state.settings.primaryCurrency,
-    swapsTransactions: TransactionController.swapsTransactions || {},
-    swapsTokens: SwapsController.tokens,
-    smartTransactions,
-  };
-};
-
-export default connect(mapStateToProps)(TransactionNotification);
+export default connector(TransactionNotification);
