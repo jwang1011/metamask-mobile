@@ -1,21 +1,40 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { ChainId } from '@metamask/controller-utils';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
+import { ViewStyle } from 'react-native';
 import TokenIcon from '../Swaps/components/TokenIcon';
 import {
   selectChainId,
   selectEvmTicker,
 } from '../../../selectors/networkController';
 
-function NetworkMainAssetLogo({
+interface NetworkMainAssetLogoOwnProps {
+  chainId?: string;
+  ticker?: string;
+  style?: ViewStyle;
+  big?: boolean;
+  biggest?: boolean;
+  testID?: string;
+}
+
+const mapStateToProps = (state: any, ownProps: NetworkMainAssetLogoOwnProps) => ({
+  chainId: ownProps.chainId || selectChainId(state),
+  ticker: ownProps.ticker || selectEvmTicker(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type NetworkMainAssetLogoProps = PropsFromRedux & NetworkMainAssetLogoOwnProps;
+
+const NetworkMainAssetLogo: React.FC<NetworkMainAssetLogoProps> = ({
   chainId,
   ticker,
   style,
   big,
   biggest,
   testID,
-}) {
+}) => {
   if (chainId === ChainId.mainnet) {
     return (
       <TokenIcon
@@ -36,20 +55,6 @@ function NetworkMainAssetLogo({
       testID={testID}
     />
   );
-}
-
-const mapStateToProps = (state, ownProps) => ({
-  chainId: ownProps.chainId || selectChainId(state),
-  ticker: ownProps.ticker || selectEvmTicker(state),
-});
-
-NetworkMainAssetLogo.propTypes = {
-  chainId: PropTypes.string,
-  ticker: PropTypes.string,
-  style: PropTypes.object,
-  big: PropTypes.bool,
-  biggest: PropTypes.bool,
-  testID: PropTypes.string,
 };
 
-export default connect(mapStateToProps)(NetworkMainAssetLogo);
+export default connector(NetworkMainAssetLogo);

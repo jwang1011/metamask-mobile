@@ -1,26 +1,40 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { strings } from '../../../../locales/i18n';
 import ActionModal from '../ActionModal';
 import TransactionActionContent from './TransactionActionContent';
 
+interface TransactionActionModalProps {
+  isVisible?: boolean;
+  confirmDisabled?: boolean;
+  onCancelPress?: () => void;
+  onConfirmPress?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  feeText?: string;
+  titleText?: string;
+  gasTitleText?: string;
+  descriptionText?: string;
+  cancelButtonMode?: string;
+  confirmButtonMode?: string;
+}
+
 /**
  * View that renders a modal to be used for speed up or cancel transaction modal
  */
-export default function TransactionActionModal({
+const TransactionActionModal: React.FC<TransactionActionModalProps> = ({
   isVisible,
-  confirmDisabled,
+  confirmDisabled = false,
   onCancelPress,
   onConfirmPress,
-  confirmText,
-  cancelText,
+  confirmText = strings('action_view.confirm'),
+  cancelText = strings('action_view.cancel'),
   feeText,
   titleText,
   gasTitleText,
   descriptionText,
-  cancelButtonMode,
-  confirmButtonMode,
-}) {
+  cancelButtonMode = 'neutral',
+  confirmButtonMode = 'warning',
+}) => {
   return (
     <ActionModal
       modalVisible={isVisible}
@@ -42,62 +56,6 @@ export default function TransactionActionModal({
       />
     </ActionModal>
   );
-}
-
-TransactionActionModal.defaultProps = {
-  cancelButtonMode: 'neutral',
-  confirmButtonMode: 'warning',
-  cancelText: strings('action_view.cancel'),
-  confirmText: strings('action_view.confirm'),
-  confirmDisabled: false,
-  displayCancelButton: true,
-  displayConfirmButton: true,
 };
 
-TransactionActionModal.propTypes = {
-  isVisible: PropTypes.bool,
-  /**
-   * Text to show in the cancel button
-   */
-  cancelText: PropTypes.string,
-  /**
-   * Whether confirm button is disabled
-   */
-  confirmDisabled: PropTypes.bool,
-  /**
-   * Text to show in the confirm button
-   */
-  confirmText: PropTypes.string,
-  /**
-   * Called when the cancel button is clicked
-   */
-  onCancelPress: PropTypes.func,
-  /**
-   * Called when the confirm button is clicked
-   */
-  onConfirmPress: PropTypes.func,
-  /**
-   * Cancel button enabled or disabled
-   */
-  cancelButtonMode: PropTypes.string,
-  /**
-   * Confirm button enabled or disabled
-   */
-  confirmButtonMode: PropTypes.string,
-  /**
-   * Text to show as fee
-   */
-  feeText: PropTypes.string,
-  /**
-   * Text to show as tit;e
-   */
-  titleText: PropTypes.string,
-  /**
-   * Text to show as title of gas section
-   */
-  gasTitleText: PropTypes.string,
-  /**
-   * Text to show as description
-   */
-  descriptionText: PropTypes.string,
-};
+export default TransactionActionModal;
