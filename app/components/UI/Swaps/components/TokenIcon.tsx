@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import PropTypes from 'prop-types';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 
 import RemoteImage from '../../../Base/RemoteImage';
 import Text from '../../../Base/Text';
@@ -11,6 +10,25 @@ import imageIcons from '../../../../images/image-icons';
 const ethLogo = require('../../../../images/eth-logo-new.png');
 /* eslint-enable import/no-commonjs */
 
+interface EmptyIconProps {
+  medium?: boolean;
+  big?: boolean;
+  biggest?: boolean;
+  style?: ViewStyle | ViewStyle[];
+  testID?: string;
+  children?: React.ReactNode;
+}
+
+interface TokenIconProps {
+  symbol?: string;
+  icon?: string;
+  medium?: boolean;
+  big?: boolean;
+  biggest?: boolean;
+  style?: ViewStyle | ViewStyle[];
+  testID?: string;
+}
+
 const REGULAR_SIZE = 24;
 const REGULAR_RADIUS = 12;
 const MEDIUM_SIZE = 36;
@@ -20,7 +38,7 @@ const BIG_RADIUS = 25;
 const BIGGEST_SIZE = 70;
 const BIGGEST_RADIUS = 35;
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     icon: {
       width: REGULAR_SIZE,
@@ -63,7 +81,7 @@ const createStyles = (colors) =>
     },
   });
 
-const EmptyIcon = ({ medium, big, biggest, style, ...props }) => {
+const EmptyIcon: React.FC<EmptyIconProps> = ({ medium, big, biggest, style, ...props }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -82,15 +100,7 @@ const EmptyIcon = ({ medium, big, biggest, style, ...props }) => {
   );
 };
 
-EmptyIcon.propTypes = {
-  medium: PropTypes.bool,
-  big: PropTypes.bool,
-  biggest: PropTypes.bool,
-  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  testID: PropTypes.string,
-};
-
-function TokenIcon({ symbol, icon, medium, big, biggest, style, testID }) {
+const TokenIcon: React.FC<TokenIconProps> = ({ symbol, icon, medium, big, biggest, style, testID }) => {
   const [showFallback, setShowFallback] = useState(false);
   const { colors } = useTheme();
   const styles = createStyles(colors);
@@ -158,16 +168,6 @@ function TokenIcon({ symbol, icon, medium, big, biggest, style, testID }) {
   }
 
   return <EmptyIcon medium={medium} style={style} />;
-}
-
-TokenIcon.propTypes = {
-  symbol: PropTypes.string,
-  icon: PropTypes.string,
-  medium: PropTypes.bool,
-  big: PropTypes.bool,
-  biggest: PropTypes.bool,
-  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  testID: PropTypes.string,
 };
 
 export default TokenIcon;
