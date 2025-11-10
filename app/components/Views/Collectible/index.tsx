@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { RefreshControl, ScrollView, View, StyleSheet } from 'react-native';
-import PropTypes from 'prop-types';
 import { getNetworkNavbarOptions } from '../../UI/Navbar';
-import { connect, useSelector } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import Collectibles from '../../UI/Collectibles';
 import CollectibleContractOverview from '../../UI/CollectibleContractOverview';
 import Engine from '../../../core/Engine';
@@ -16,7 +15,35 @@ import { selectSelectedNetworkClientId } from '../../../selectors/networkControl
 import { areAddressesEqual } from '../../../util/address';
 import { endTrace, trace, TraceName } from '../../../util/trace';
 
-const createStyles = (colors) =>
+interface CollectibleOwnProps {
+  navigation: any;
+  route: {
+    params?: any;
+  };
+}
+
+interface CollectibleState {
+  refreshing: boolean;
+  collectibles: any[];
+}
+
+const mapStateToProps = (state: any) => ({
+  collectibles: collectiblesSelector(state),
+  collectibleContractModalVisible: state.modals.collectibleContractModalVisible,
+  selectedNetworkClientId: selectSelectedNetworkClientId(state),
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  toggleCollectibleContractModal: () =>
+    dispatch(toggleCollectibleContractModal()),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type CollectibleProps = PropsFromRedux & CollectibleOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: colors.background.default,
@@ -29,36 +56,11 @@ const createStyles = (colors) =>
  * including the overview (name, address, symbol, logo, description, total supply)
  * and also individual collectibles list
  */
-class Collectible extends PureComponent {
-  static propTypes = {
-    /**
-     * Array of assets (in this case Collectibles)
-     */
-    collectibles: PropTypes.array,
-    /**
-    /* navigation object required to access the props
-    /* passed by the parent component
-    */
-    navigation: PropTypes.object,
-    /**
-     * Called to toggle collectible contract information modal
-     */
-    toggleCollectibleContractModal: PropTypes.func,
-    /**
-     * Whether collectible contract information is visible
-     */
-    collectibleContractModalVisible: PropTypes.bool,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Selected network client ID
-     */
-    selectedNetworkClientId: PropTypes.string,
-  };
+class Collectible extends PureComponent<CollectibleProps, CollectibleState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: CollectibleState = {
     refreshing: false,
     collectibles: [],
   };
@@ -177,17 +179,4 @@ class Collectible extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  collectibles: collectiblesSelector(state),
-  collectibleContractModalVisible: state.modals.collectibleContractModalVisible,
-  selectedNetworkClientId: selectSelectedNetworkClientId(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  toggleCollectibleContractModal: () =>
-    dispatch(toggleCollectibleContractModal()),
-});
-
-Collectible.contextType = ThemeContext;
-
-export default connect(mapStateToProps, mapDispatchToProps)(Collectible);
+export default connector(Collectible);

@@ -1,7 +1,6 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import Routes from '../../../constants/navigation/Routes';
 import { fontStyles } from '../../../styles/common';
@@ -20,7 +19,33 @@ import { WalletViewSelectorsIDs } from '../../../../e2e/selectors/wallet/WalletV
 import { InitSendLocation } from '../../Views/confirmations/constants/send';
 import { handleSendPageNavigation } from '../../Views/confirmations/utils/send';
 
-const createStyles = (colors) =>
+interface CollectibleContractOverviewOwnProps {
+  collectibleContract: {
+    name: string;
+    address: string;
+    logo?: string;
+  };
+  navigation: any;
+  ownerOf: number;
+}
+
+const mapStateToProps = (state: any) => ({
+  collectibles: collectiblesSelector(state),
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  toggleCollectibleContractModal: () =>
+    dispatch(toggleCollectibleContractModal()),
+  newAssetTransaction: (selectedAsset: any) =>
+    dispatch(newAssetTransaction(selectedAsset)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type CollectibleContractOverviewProps = PropsFromRedux & CollectibleContractOverviewOwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       flex: 1,
@@ -58,34 +83,9 @@ const createStyles = (colors) =>
  * View that displays a specific collectible contract
  * including the overview (name, address, symbol, logo, description, total supply)
  */
-class CollectibleContractOverview extends PureComponent {
-  static propTypes = {
-    /**
-     * Object that represents the asset to be displayed
-     */
-    collectibleContract: PropTypes.object,
-    /**
-     * Array of ERC721 assets
-     */
-    collectibles: PropTypes.array,
-    /**
-     * Navigation object required to push
-     * the Asset detail view
-     */
-    navigation: PropTypes.object,
-    /**
-     * How many collectibles are owned by the user
-     */
-    ownerOf: PropTypes.number,
-    /**
-     * Action that sets a collectible contract type transaction
-     */
-    toggleCollectibleContractModal: PropTypes.func.isRequired,
-    /**
-     * Start transaction with asset
-     */
-    newAssetTransaction: PropTypes.func,
-  };
+class CollectibleContractOverview extends PureComponent<CollectibleContractOverviewProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   onAdd = () => {
     const { navigation, collectibleContract } = this.props;
@@ -167,20 +167,4 @@ class CollectibleContractOverview extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  collectibles: collectiblesSelector(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  toggleCollectibleContractModal: () =>
-    dispatch(toggleCollectibleContractModal()),
-  newAssetTransaction: (selectedAsset) =>
-    dispatch(newAssetTransaction(selectedAsset)),
-});
-
-CollectibleContractOverview.contextType = ThemeContext;
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(CollectibleContractOverview);
+export default connector(CollectibleContractOverview);
