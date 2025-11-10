@@ -1,10 +1,19 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Animated } from 'react-native';
-import PropTypes from 'prop-types';
+import { Animated, ViewStyle } from 'react-native';
+
+interface FadeAnimationViewProps {
+  children?: React.ReactNode;
+  style?: ViewStyle | ViewStyle[];
+  animationTime?: number;
+  valueToWatch?: string | number;
+  onAnimationStart?: () => void;
+  onAnimationEnd?: () => void;
+  animateOnChange?: boolean;
+}
 
 const TIME = 3900; // 3900/6 = 650 for each
 
-const FadeAnimationView = ({
+const FadeAnimationView: React.FC<FadeAnimationViewProps> = ({
   children,
   style,
   animationTime = TIME,
@@ -97,37 +106,6 @@ const FadeAnimationView = ({
       {isAnimating ? lastChildren : children}
     </Animated.View>
   );
-};
-
-FadeAnimationView.propTypes = {
-  /**
-   * Component to render
-   */
-  children: PropTypes.oneOfType([PropTypes.object, PropTypes.node]),
-  /**
-   * Style of the container view
-   */
-  style: PropTypes.oneOfType([PropTypes.object, PropTypes.array]),
-  /**
-   * Time for the animation
-   */
-  animationTime: PropTypes.number,
-  /**
-   * Value to watch for changes to start animation
-   */
-  valueToWatch: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  /**
-   * Function to call when update animation starts
-   */
-  onAnimationStart: PropTypes.func,
-  /**
-   * Function to call when update animation ends
-   */
-  onAnimationEnd: PropTypes.func,
-  /**
-   * If the values should animate upon update or not
-   */
-  animateOnChange: PropTypes.bool,
 };
 
 export default FadeAnimationView;
