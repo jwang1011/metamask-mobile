@@ -1,8 +1,7 @@
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { SigningBottomSheetSelectorsIDs } from '../../../../../../../e2e/selectors/Browser/SigningBottomSheet.selectors';
 import { strings } from '../../../../../../../locales/i18n';
 import { withMetricsAwareness } from '../../../../../../components/hooks/useMetrics';
@@ -22,7 +21,36 @@ import WebsiteIcon from '../../../../../UI/WebsiteIcon';
 import BlockaidBanner from '../BlockaidBanner/BlockaidBanner';
 import { ResultType } from '../BlockaidBanner/BlockaidBanner.types';
 
-const getCleanUrl = (url) => {
+interface SignatureRequestOwnProps {
+  onReject: () => void;
+  onConfirm: () => void;
+  children?: React.ReactNode;
+  currentPageInformation?: {
+    url?: string;
+    icon?: string;
+  };
+  type?: string;
+  networkType?: string;
+  truncateMessage?: boolean;
+  toggleExpandedMessage?: () => void;
+  fromAddress?: string;
+  isSigningQRObject?: boolean;
+  QRState?: any;
+  testID?: string;
+  metrics: any;
+}
+
+const mapStateToProps = (state: any) => ({
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  securityAlertResponse: state.signatureRequest.securityAlertResponse,
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type SignatureRequestProps = PropsFromRedux & SignatureRequestOwnProps;
+
+const getCleanUrl = (url: string) => {
   try {
     const urlObject = new URL(url);
 
@@ -32,7 +60,7 @@ const getCleanUrl = (url) => {
   }
 };
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     root: {
       backgroundColor: colors.background.default,
@@ -125,53 +153,9 @@ const createStyles = (colors) =>
 /**
  * PureComponent that renders scrollable content inside signature request user interface
  */
-class SignatureRequest extends PureComponent {
-  static propTypes = {
-    /**
-     * Callback triggered when this message signature is rejected
-     */
-    onReject: PropTypes.func,
-    /**
-     * Callback triggered when this message signature is approved
-     */
-    onConfirm: PropTypes.func,
-    /**
-     * Content to display above the action buttons
-     */
-    children: PropTypes.node,
-    /**
-     * Object containing current page title and url
-     */
-    currentPageInformation: PropTypes.object,
-    /**
-     * String representing signature type
-     */
-    type: PropTypes.string,
-    /**
-     * String representing the associated network
-     */
-    networkType: PropTypes.string,
-    /**
-     * Whether it should render the expand arrow icon
-     */
-    truncateMessage: PropTypes.bool,
-    /**
-     * Expands the message box on press.
-     */
-    toggleExpandedMessage: PropTypes.func,
-    /**
-     * Active address of account that triggered signing.
-     */
-    fromAddress: PropTypes.string,
-    isSigningQRObject: PropTypes.bool,
-    QRState: PropTypes.object,
-    testID: PropTypes.string,
-    securityAlertResponse: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class SignatureRequest extends PureComponent<SignatureRequestProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   /**
    * Calls trackCancelSignature and onReject callback
@@ -395,13 +379,6 @@ class SignatureRequest extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => ({
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  securityAlertResponse: state.signatureRequest.securityAlertResponse,
-});
-
-SignatureRequest.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(
+export default connector(
   withQRHardwareAwareness(withMetricsAwareness(SignatureRequest)),
 );
