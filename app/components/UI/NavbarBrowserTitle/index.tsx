@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { fontStyles } from '../../../styles/common';
 import Networks from '../../../util/networks';
@@ -10,7 +9,19 @@ import { mockTheme, ThemeContext } from '../../../util/theme';
 import { selectProviderConfig } from '../../../selectors/networkController';
 import { CommonSelectorsIDs } from '../../../../e2e/selectors/Common.selectors';
 
-const createStyles = (colors) =>
+interface NavbarBrowserTitleOwnProps {
+  hostname: string;
+  https?: boolean;
+  error?: boolean;
+  icon?: string;
+  route: {
+    params?: {
+      showUrlModal?: () => void;
+    };
+  };
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     wrapper: {
       alignItems: 'center',
@@ -61,43 +72,28 @@ const createStyles = (colors) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  providerConfig: selectProviderConfig(state),
+});
+
+const connector = connect(mapStateToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type NavbarBrowserTitleProps = PropsFromRedux & NavbarBrowserTitleOwnProps;
+
 /**
  * UI PureComponent that renders inside the navbar
  * showing the view title and the selected network
  */
-class NavbarBrowserTitle extends PureComponent {
-  static propTypes = {
-    /**
-     * Object representing the configuration for the selected network
-     */
-    providerConfig: PropTypes.object.isRequired,
-    /**
-     * hostname of the current webview
-     */
-    hostname: PropTypes.string.isRequired,
-    /**
-     * Boolean that specifies if it is a secure website
-     */
-    https: PropTypes.bool,
-    /**
-     * Boolean that specifies if there is an error
-     */
-    error: PropTypes.bool,
-    /**
-     * Website icon
-     */
-    icon: PropTypes.string,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-  };
+class NavbarBrowserTitle extends PureComponent<NavbarBrowserTitleProps> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
   onTitlePress = () => {
     this.props.route.params?.showUrlModal?.();
   };
 
-  getNetworkName(providerConfig) {
+  getNetworkName(providerConfig: any) {
     let name = { ...Networks.rpc, color: null }.name;
 
     if (providerConfig) {
@@ -163,10 +159,4 @@ class NavbarBrowserTitle extends PureComponent {
   };
 }
 
-const mapStateToProps = (state) => ({
-  providerConfig: selectProviderConfig(state),
-});
-
-NavbarBrowserTitle.contextType = ThemeContext;
-
-export default connect(mapStateToProps)(NavbarBrowserTitle);
+export default connector(NavbarBrowserTitle);

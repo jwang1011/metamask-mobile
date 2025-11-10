@@ -10,10 +10,9 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { fontStyles } from '../../../styles/common';
 import { getPaymentRequestSuccessOptionsTitle } from '../../UI/Navbar';
-import PropTypes from 'prop-types';
 import EvilIcons from 'react-native-vector-icons/EvilIcons';
 import StyledButton from '../StyledButton';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -32,9 +31,29 @@ import { ThemeContext, mockTheme } from '../../../util/theme';
 import generateTestId from '../../../../wdio/utils/generateTestId';
 import { SendLinkViewSelectorsIDs } from '../../../../e2e/selectors/Receive/SendLinkView.selectors';
 
+interface PaymentRequestSuccessOwnProps {
+  navigation: any;
+  route: {
+    params?: {
+      link?: string;
+      qrLink?: string;
+      amount?: string;
+      symbol?: string;
+    };
+  };
+}
+
+interface PaymentRequestSuccessState {
+  link: string;
+  qrLink: string;
+  amount: string;
+  symbol: string;
+  qrModalVisible: boolean;
+}
+
 const isIos = Device.isIos();
 
-const createStyles = (theme) =>
+const createStyles = (theme: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: theme.colors.background.default,
@@ -158,30 +177,24 @@ const createStyles = (theme) =>
     },
   });
 
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
+});
+
+const connector = connect(null, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type PaymentRequestSuccessProps = PropsFromRedux & PaymentRequestSuccessOwnProps;
+
 /**
  * View to interact with a previously generated payment request link
  */
-class PaymentRequestSuccess extends PureComponent {
-  static propTypes = {
-    /**
-     * Navigation object
-     */
-    navigation: PropTypes.object,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-    /* Triggers global alert
-    */
-    showAlert: PropTypes.func,
-    /**
-    /* Prompts protect wallet modal
-    */
-    protectWalletModalVisible: PropTypes.func,
-  };
+class PaymentRequestSuccess extends PureComponent<PaymentRequestSuccessProps, PaymentRequestSuccessState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: PaymentRequestSuccessState = {
     link: '',
     qrLink: '',
     amount: '',
@@ -411,11 +424,4 @@ class PaymentRequestSuccess extends PureComponent {
   }
 }
 
-PaymentRequestSuccess.contextType = ThemeContext;
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
-});
-
-export default connect(null, mapDispatchToProps)(PaymentRequestSuccess);
+export default connector(PaymentRequestSuccess);
