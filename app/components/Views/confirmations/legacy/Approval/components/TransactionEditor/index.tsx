@@ -657,7 +657,7 @@ class TransactionEditor extends PureComponent<TransactionEditorProps, Transactio
     });
   };
 
-  saveGasEdition = (gasSelected) => {
+  saveGasEdition = (gasSelected: string) => {
     const { gasEstimateType, setTransactionObject } = this.props;
     const { LegacyGasDataTemp } = this.state;
 
@@ -684,11 +684,14 @@ class TransactionEditor extends PureComponent<TransactionEditorProps, Transactio
     );
   };
 
-  calculateTotalGasValue = (totalHex) => fromWei(totalHex);
+  calculateTotalGasValue = (totalHex: string) => fromWei(totalHex);
 
   updateEIP1559GasDataFromLegacyTransaction = ({
     legacyGasTransaction,
     totalGasValue,
+  }: {
+    legacyGasTransaction: any;
+    totalGasValue: string;
   }) => ({
     // These values are updated to EIP1559GasData to reflect the gas values on the review UI
     suggestedGasLimit: legacyGasTransaction.suggestedGasLimit,
@@ -711,7 +714,7 @@ class TransactionEditor extends PureComponent<TransactionEditorProps, Transactio
       legacyGasTransaction?.suggestedGasPriceHex,
   });
 
-  saveGasEditionLegacy = (legacyGasTransaction, legacyGasObject) => {
+  saveGasEditionLegacy = (legacyGasTransaction: any, legacyGasObject: any) => {
     const { setTransactionObject, gasEstimateType } = this.props;
     const totalHex = legacyGasTransaction?.totalHex;
     legacyGasTransaction.error = this.validateTotal(totalHex);
@@ -949,7 +952,7 @@ class TransactionEditor extends PureComponent<TransactionEditorProps, Transactio
   };
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state: any) => {
   const transaction = getNormalizedTxState(state);
   const chainId = transaction?.chainId;
 
