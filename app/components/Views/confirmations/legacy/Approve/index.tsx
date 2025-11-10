@@ -931,7 +931,7 @@ class Approve extends PureComponent<ApproveProps, ApproveState> {
   };
 }
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state: any) => {
   const transaction = getNormalizedTxState(state);
   const chainId = transaction?.chainId;
   const networkClientId = transaction?.networkId;
