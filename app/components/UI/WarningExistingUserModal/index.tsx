@@ -1,12 +1,24 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, View, Text } from 'react-native';
 import { strings } from '../../../../locales/i18n';
 import { fontStyles } from '../../../styles/common';
 import ActionModal from '../ActionModal';
 import { useTheme } from '../../../util/theme';
 
-const createStyles = (colors) =>
+interface WarningExistingUserModalProps {
+  cancelText?: string;
+  cancelButtonDisabled?: boolean;
+  confirmText?: string;
+  children?: React.ReactNode;
+  cancelTestID?: string;
+  confirmTestID?: string;
+  warningModalVisible: boolean;
+  onCancelPress: () => void;
+  onRequestClose: () => void;
+  onConfirmPress: () => void;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     warningModalView: {
       margin: 24,
@@ -58,7 +70,7 @@ const Default = () => {
 /**
  * View that renders a warning for existing user in a modal
  */
-export default function WarningExistingUserModal({
+const WarningExistingUserModal: React.FC<WarningExistingUserModalProps> = ({
   warningModalVisible,
   onCancelPress,
   cancelButtonDisabled,
@@ -69,7 +81,7 @@ export default function WarningExistingUserModal({
   confirmText,
   confirmTestID,
   cancelTestID,
-}) {
+}) => {
   return (
     <ActionModal
       modalVisible={warningModalVisible}
@@ -88,30 +100,6 @@ export default function WarningExistingUserModal({
       {(children && children) || <Default />}
     </ActionModal>
   );
-}
-
-WarningExistingUserModal.propTypes = {
-  cancelText: PropTypes.string,
-  cancelButtonDisabled: PropTypes.bool,
-  confirmText: PropTypes.string,
-  children: PropTypes.oneOfType([PropTypes.node, PropTypes.func]),
-  cancelTestID: PropTypes.string,
-  confirmTestID: PropTypes.string,
-
-  /**
-   * Whether the modal is visible
-   */
-  warningModalVisible: PropTypes.bool.isRequired,
-  /**
-   * Cancel callback
-   */
-  onCancelPress: PropTypes.func.isRequired,
-  /**
-   * Close callback
-   */
-  onRequestClose: PropTypes.func.isRequired,
-  /**
-   * Confirm callback
-   */
-  onConfirmPress: PropTypes.func.isRequired,
 };
+
+export default WarningExistingUserModal;
