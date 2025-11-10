@@ -1,5 +1,4 @@
 /* eslint-disable */
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import {
   StyleSheet,
@@ -105,11 +104,11 @@ import {
 } from '../../../../../util/metrics/MultichainAPI/networkMetricUtils';
 import { isRemoveGlobalNetworkSelectorEnabled } from '../../../../../util/networks';
 
-const formatNetworkRpcUrl = (rpcUrl) => {
+const formatNetworkRpcUrl = (rpcUrl: string) => {
   return stripProtocol(stripKeyFromInfuraUrl(rpcUrl));
 };
 
-const createStyles = (colors) =>
+const createStyles = (colors: any) =>
   StyleSheet.create({
     baseAll: {
       padding: 16,
@@ -407,71 +406,70 @@ const allNetworks = getAllNetworks();
 const InfuraKey = process.env.MM_INFURA_PROJECT_ID;
 const infuraProjectId = InfuraKey === 'null' ? '' : InfuraKey;
 
+interface NetworkSettingsProps {
+  networkConfigurations?: any;
+  navigation: any;
+  route: any;
+  showNetworkOnboardingAction: (params: any) => void;
+  networkOnboardedState?: any;
+  isCustomMainnet?: boolean;
+  providerConfig?: any;
+  metrics: any;
+  useSafeChainsListValidation?: boolean;
+  matchedChainNetwork?: any;
+  isAllNetworks?: boolean;
+  tokenNetworkFilter?: any;
+  isRpcFailoverEnabled?: boolean;
+}
+
+interface NetworkSettingsState {
+  rpcUrl: string | undefined;
+  failoverRpcUrls: string[] | undefined;
+  rpcName: string | undefined;
+  rpcUrlFrom: string | undefined;
+  rpcNameForm: string;
+  rpcUrls: any[];
+  blockExplorerUrls: any[];
+  selectedRpcEndpointIndex: number;
+  blockExplorerUrl: string | undefined;
+  blockExplorerUrlForm: string | undefined;
+  nickname: string | undefined;
+  chainId: string | undefined;
+  ticker: string | undefined;
+  editable: boolean | undefined;
+  addMode: boolean;
+  warningRpcUrl: string | undefined;
+  warningChainId: string | undefined;
+  warningSymbol: string | undefined;
+  validatedRpcURL: boolean;
+  validatedChainId: boolean;
+  validatedSymbol: boolean;
+  initialState: any;
+  enableAction: boolean;
+  inputWidth: { width: string };
+  showPopularNetworkModal: boolean;
+  popularNetwork: any;
+  showWarningModal: boolean;
+  showNetworkDetailsModal: boolean;
+  isNameFieldFocused: boolean;
+  isSymbolFieldFocused: boolean;
+  isRpcUrlFieldFocused: boolean;
+  isChainIdFieldFocused: boolean;
+  networkList: any[];
+  showMultiRpcAddModal: { isVisible: boolean };
+  showMultiBlockExplorerAddModal: { isVisible: boolean };
+  showAddRpcForm: { isVisible: boolean };
+  showAddBlockExplorerForm: { isVisible: boolean };
+}
+
 /**
  * Main view for app configurations
  */
-export class NetworkSettings extends PureComponent {
-  static propTypes = {
-    /**
-     * Network configurations
-     */
-    networkConfigurations: PropTypes.object,
-    /**
-     * Object that represents the navigator
-     */
-    navigation: PropTypes.object,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * handles action for onboarding to a network
-     */
-    showNetworkOnboardingAction: PropTypes.func,
-    /**
-     * returns an array of onboarded networks
-     */
-    networkOnboardedState: PropTypes.object,
-    /**
-     * Checks if adding custom mainnet.
-     */
-    isCustomMainnet: PropTypes.bool,
-    /**
-     * Current network provider configuration
-     */
-    providerConfig: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
+export class NetworkSettings extends PureComponent<NetworkSettingsProps, NetworkSettingsState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-    /**
-     * Checks if toggle verification is enabled
-     */
-    useSafeChainsListValidation: PropTypes.bool,
-
-    /**
-     * Matched object from third provider
-     */
-    matchedChainNetwork: PropTypes.object,
-
-    /**
-     * Checks if all networks are selected
-     */
-    isAllNetworks: PropTypes.bool,
-
-    /**
-     * Token network filter
-     */
-    tokenNetworkFilter: PropTypes.object,
-
-    /**
-     * Whether or not the RPC failover feature is enabled
-     */
-    isRpcFailoverEnabled: PropTypes.bool,
-  };
-
-  state = {
+  state: NetworkSettingsState = {
     rpcUrl: undefined,
     failoverRpcUrls: undefined,
     rpcName: undefined,
@@ -519,15 +517,15 @@ export class NetworkSettings extends PureComponent {
     },
   };
 
-  inputRpcURL = React.createRef();
-  inputNameRpcURL = React.createRef();
-  inputChainId = React.createRef();
-  inputSymbol = React.createRef();
-  inputBlockExplorerURL = React.createRef();
+  inputRpcURL = React.createRef<TextInput>();
+  inputNameRpcURL = React.createRef<TextInput>();
+  inputChainId = React.createRef<TextInput>();
+  inputSymbol = React.createRef<TextInput>();
+  inputBlockExplorerURL = React.createRef<TextInput>();
 
   getOtherNetworks = () => allNetworks.slice(1);
 
-  templateInfuraRpc = (endpoint) =>
+  templateInfuraRpc = (endpoint: string) =>
     endpoint.endsWith('{infuraProjectId}')
       ? endpoint.replace('{infuraProjectId}', infuraProjectId ?? '')
       : endpoint;
@@ -2632,8 +2630,7 @@ export class NetworkSettings extends PureComponent {
   }
 }
 
-NetworkSettings.contextType = ThemeContext;
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: any) => ({
   showNetworkOnboardingAction: ({
     networkUrl,
     networkType,
@@ -2650,7 +2647,7 @@ const mapDispatchToProps = (dispatch) => ({
     ),
 });
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: any) => ({
   providerConfig: selectProviderConfig(state),
   networkConfigurations: selectNetworkConfigurations(state),
   networkOnboardedState: state.networkOnboarded.networkOnboardedState,
