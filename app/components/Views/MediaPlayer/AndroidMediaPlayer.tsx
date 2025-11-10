@@ -166,7 +166,7 @@ const createStyles = (theme: any) =>
     },
   });
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({
+function VideoPlayer({
   controlsAnimationTiming,
   controlsToggleTiming,
   source,
@@ -178,7 +178,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   selectedTextTrack,
   onLoad: propsOnLoad,
   style,
-}) {
+}: VideoPlayerProps) {
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(true);
   const [seekerFillWidth, setSeekerFillWidth] = useState(0);
