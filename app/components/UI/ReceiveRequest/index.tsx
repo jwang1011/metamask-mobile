@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
 import {
   SafeAreaView,
   Dimensions,
@@ -9,7 +8,7 @@ import {
 } from 'react-native';
 import Share from 'react-native-share';
 import QRCode from 'react-native-qrcode-svg';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { MetaMetricsEvents } from '../../../core/Analytics';
 import Logger from '../../../util/Logger';
@@ -36,9 +35,20 @@ import PNG_MM_LOGO_PATH from '../../../images/branding/fox.png';
 import { isEthAddress } from '../../../util/address';
 import { selectIsEvmNetworkSelected } from '../../../selectors/multichainNetworkController';
 
+interface ReceiveRequestOwnProps {
+  navigation: any;
+  hideModal?: () => void;
+  metrics: any;
+}
+
+interface ReceiveRequestState {
+  qrModalVisible: boolean;
+  buyModalVisible: boolean;
+}
+
 const { height: windowHeight, width: windowWidth } = Dimensions.get('window');
 
-const createStyles = (theme) =>
+const createStyles = (theme: any) =>
   StyleSheet.create({
     wrapper: {
       backgroundColor: theme.colors.background.default,
@@ -108,59 +118,36 @@ const createStyles = (theme) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  chainId: selectChainId(state),
+  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+  receiveAsset: state.modals.receiveAsset,
+  seedphraseBackedUp: state.user.seedphraseBackedUp,
+  isNetworkBuySupported: isNetworkRampSupported(
+    selectChainId(state),
+    getRampNetworks(state),
+  ),
+  isEvmNetworkSelected: selectIsEvmNetworkSelected(state),
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ReceiveRequestProps = PropsFromRedux & ReceiveRequestOwnProps;
+
 /**
  * PureComponent that renders receive options
  */
-class ReceiveRequest extends PureComponent {
-  static propTypes = {
-    /**
-     * The navigator object
-     */
-    navigation: PropTypes.object,
-    /**
-     * Selected address as string
-     */
-    selectedAddress: PropTypes.string,
-    /**
-     * Asset to receive, could be not defined
-     */
-    receiveAsset: PropTypes.object,
-    /**
-     /* Triggers global alert
-     */
-    showAlert: PropTypes.func,
-    /**
-     * Network provider chain id
-     */
-    chainId: PropTypes.string,
-    /**
-     * Prompts protect wallet modal
-     */
-    protectWalletModalVisible: PropTypes.func,
-    /**
-     * Hides the modal that contains the component
-     */
-    hideModal: PropTypes.func,
-    /**
-     * redux flag that indicates if the user
-     * completed the seed phrase backup flow
-     */
-    seedphraseBackedUp: PropTypes.bool,
-    /**
-     * Boolean that indicates if the network supports buy
-     */
-    isNetworkBuySupported: PropTypes.bool,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-    /**
-     * Boolean that indicates if the evm network is selected
-     */
-    isEvmNetworkSelected: PropTypes.bool,
-  };
+class ReceiveRequest extends PureComponent<ReceiveRequestProps, ReceiveRequestState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: ReceiveRequestState = {
     qrModalVisible: false,
     buyModalVisible: false,
   };
@@ -285,26 +272,4 @@ class ReceiveRequest extends PureComponent {
   }
 }
 
-ReceiveRequest.contextType = ThemeContext;
-
-const mapStateToProps = (state) => ({
-  chainId: selectChainId(state),
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  receiveAsset: state.modals.receiveAsset,
-  seedphraseBackedUp: state.user.seedphraseBackedUp,
-  isNetworkBuySupported: isNetworkRampSupported(
-    selectChainId(state),
-    getRampNetworks(state),
-  ),
-  isEvmNetworkSelected: selectIsEvmNetworkSelected(state),
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-  protectWalletModalVisible: () => dispatch(protectWalletModalVisible()),
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withMetricsAwareness(ReceiveRequest));
+export default connector(withMetricsAwareness(ReceiveRequest));
