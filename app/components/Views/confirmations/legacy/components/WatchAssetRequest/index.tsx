@@ -247,23 +247,4 @@ const WatchAssetRequest: React.FC<WatchAssetRequestProps> = ({
   );
 };
 
-WatchAssetRequest.propTypes = {
-  /**
-   * Callback triggered when this message signature is rejected
-   */
-  onCancel: PropTypes.func,
-  /**
-   * Callback triggered when this message signature is approved
-   */
-  onConfirm: PropTypes.func,
-  /**
-   * Token object
-   */
-  suggestedAssetMeta: PropTypes.object,
-  /**
-   * Object containing current page title, url, and icon href
-   */
-  currentPageInformation: PropTypes.object,
-};
-
 export default WatchAssetRequest;
