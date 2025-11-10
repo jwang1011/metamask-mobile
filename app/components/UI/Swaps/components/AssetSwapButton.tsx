@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, View } from 'react-native';
 
 import Text from '../../../Base/Text';
@@ -9,18 +8,25 @@ import InfoModal from './InfoModal';
 import useModalHandler from '../../../Base/hooks/useModalHandler';
 import { strings } from '../../../../../locales/i18n';
 
+interface AssetSwapButtonProps {
+  isFeatureLive?: boolean;
+  isNetworkAllowed?: boolean;
+  isAssetAllowed?: boolean;
+  onPress?: () => void;
+}
+
 const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
 });
 
-function AssetSwapButton({
+const AssetSwapButton: React.FC<AssetSwapButtonProps> = ({
   isFeatureLive,
   isNetworkAllowed,
   isAssetAllowed,
   onPress,
-}) {
+}) => {
   const [isModalOpen, , showModal, hideModal] = useModalHandler(false);
   const isDisabled = !isFeatureLive || !isNetworkAllowed || !isAssetAllowed;
 
@@ -59,13 +65,6 @@ function AssetSwapButton({
       />
     </>
   );
-}
-
-AssetSwapButton.propTypes = {
-  isFeatureLive: PropTypes.bool,
-  isNetworkAllowed: PropTypes.bool,
-  isAssetAllowed: PropTypes.bool,
-  onPress: PropTypes.func,
 };
 
 export default AssetSwapButton;

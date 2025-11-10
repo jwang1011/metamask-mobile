@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { useSelector } from 'react-redux';
 import { Animated, View, StyleSheet, Image } from 'react-native';
-import PropTypes from 'prop-types';
 import { selectSelectedNetworkClientId } from '../../../../../selectors/networkController';
 import Engine from '../../../../../core/Engine';
 import Logger from '../../../../../util/Logger';
@@ -19,6 +18,19 @@ import Title from '../../../../Base/Title';
 import { useTheme } from '../../../../../util/theme';
 import foxImage from '../../../../../images/branding/fox.png';
 import ShapesBackgroundAnimation from './ShapesBackgroundAnimation';
+
+interface LoadingAnimationProps {
+  finish?: boolean;
+  onAnimationEnd?: () => void;
+  aggregatorMetadata?: {
+    [key: string]: {
+      title?: string;
+      color?: string;
+      iconPng?: string;
+    };
+  };
+  headPan?: boolean;
+}
 
 const ANIM_MULTIPLIER = 0.67;
 const INITIAL_DELAY = 1000 * ANIM_MULTIPLIER;
@@ -36,7 +48,7 @@ const PAN_RADIO = STAGE_SIZE * 0.6;
 // "finalizing" animationg
 const FINALIZING_PERCENTAGE = 80;
 
-const createStyles = (colors, shadows) =>
+const createStyles = (colors: any, shadows: any) =>
   StyleSheet.create({
     screen: {
       flex: 1,
@@ -108,17 +120,17 @@ const createStyles = (colors, shadows) =>
     },
   });
 
-function round(value, decimals) {
+function round(value: number, decimals: number) {
   return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
 }
 
-function LoadingAnimation({
+const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
   finish,
   onAnimationEnd,
   aggregatorMetadata,
   headPan = true,
-}) {
-  const [metadata, setMetadata] = useState([]);
+}) => {
+  const [metadata, setMetadata] = useState<Array<{ key: string; title?: string; color?: string; iconPng?: string }>>([]);
   const [shouldStart, setShouldStart] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasFinished, setHasFinished] = useState(false);
@@ -129,7 +141,7 @@ function LoadingAnimation({
   const selectedNetworkClientId = useSelector(selectSelectedNetworkClientId);
 
   /* References */
-  const foxRef = useRef();
+  const foxRef = useRef<any>();
   const foxHeadPan = useRef(new Animated.ValueXY(0, 0)).current;
   const currentQuoteIndexValue = useRef(new Animated.Value(0)).current;
   const progressValue = useRef(new Animated.Value(0)).current;
@@ -497,25 +509,6 @@ function LoadingAnimation({
       </View>
     </View>
   );
-}
-
-LoadingAnimation.propTypes = {
-  /**
-   * Wether to execute the "Finalizing" animation after the main sequence
-   */
-  finish: PropTypes.bool,
-  /**
-   * Function callback executed once both the main sequence and the finalizing animation ends
-   */
-  onAnimationEnd: PropTypes.func,
-  /**
-   * Aggregator metada from Swaps controller API
-   */
-  aggregatorMetadata: PropTypes.object,
-  /**
-   * Wether to show head panning animation with aggregators logos
-   */
-  headPan: PropTypes.bool,
 };
 
 export default LoadingAnimation;
