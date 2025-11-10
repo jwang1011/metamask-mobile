@@ -642,7 +642,7 @@ class TransactionEditor extends PureComponent<TransactionEditorProps, Transactio
     return totalError || amountError || toAddressError;
   };
 
-  calculateTempGasFee = (gas, selected) => {
+  calculateTempGasFee = (gas: any, selected: string) => {
     const { transaction } = this.props;
     if (selected && gas) {
       gas.suggestedGasLimit = fromWei(transaction.gas, 'wei');
