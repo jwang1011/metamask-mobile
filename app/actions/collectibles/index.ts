@@ -3,11 +3,33 @@ import {
   REMOVE_FAVORITE_COLLECTIBLE,
 } from '../../reducers/collectibles';
 
+export interface Collectible {
+  address: string;
+  tokenId: string;
+  [key: string]: any;
+}
+
+interface AddFavoriteCollectibleAction {
+  type: typeof ADD_FAVORITE_COLLECTIBLE;
+  selectedAddress: string;
+  chainId: string;
+  collectible: Collectible;
+}
+
+interface RemoveFavoriteCollectibleAction {
+  type: typeof REMOVE_FAVORITE_COLLECTIBLE;
+  selectedAddress: string;
+  chainId: string;
+  collectible: Collectible;
+}
+
+export type CollectibleAction = AddFavoriteCollectibleAction | RemoveFavoriteCollectibleAction;
+
 export const addFavoriteCollectible = (
-  selectedAddress,
-  chainId,
-  collectible,
-) => ({
+  selectedAddress: string,
+  chainId: string,
+  collectible: Collectible,
+): AddFavoriteCollectibleAction => ({
   type: ADD_FAVORITE_COLLECTIBLE,
   selectedAddress,
   chainId,
@@ -15,10 +37,10 @@ export const addFavoriteCollectible = (
 });
 
 export const removeFavoriteCollectible = (
-  selectedAddress,
-  chainId,
-  collectible,
-) => ({
+  selectedAddress: string,
+  chainId: string,
+  collectible: Collectible,
+): RemoveFavoriteCollectibleAction => ({
   type: REMOVE_FAVORITE_COLLECTIBLE,
   selectedAddress,
   chainId,

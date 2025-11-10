@@ -1,4 +1,8 @@
-const bookmarksReducer = (state = [], action) => {
+import { Bookmark, BookmarkAction } from '../../actions/bookmarks';
+
+type BookmarksState = Bookmark[];
+
+const bookmarksReducer = (state: BookmarksState = [], action: BookmarkAction): BookmarksState => {
   switch (action.type) {
     case 'ADD_BOOKMARK':
       return [...state, action.bookmark];
