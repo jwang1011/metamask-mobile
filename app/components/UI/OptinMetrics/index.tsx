@@ -9,11 +9,13 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  LayoutChangeEvent,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import { baseStyles, fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { clearOnboardingEvents } from '../../../actions/onboarding';
 import { setDataCollectionForMarketing } from '../../../actions/security';
 import { OPTIN_META_METRICS_UI_SEEN, TRUE } from '../../../constants/storage';
@@ -54,7 +56,23 @@ import {
 } from '../../../util/trace';
 import { setupSentry } from '../../../util/sentry/utils';
 
-const createStyles = ({ colors }) =>
+interface OptinMetricsOwnProps {
+  navigation: any;
+  route?: {
+    params?: {
+      onContinue?: () => void;
+    };
+  };
+  metrics: any;
+}
+
+interface OptinMetricsState {
+  scrollViewContentHeight?: number;
+  isEndReached: boolean;
+  scrollViewHeight?: number;
+}
+
+const createStyles = ({ colors }: any) =>
   StyleSheet.create({
     root: {
       ...baseStyles.flexGrow,
@@ -119,36 +137,31 @@ const createStyles = ({ colors }) =>
     },
   });
 
+const mapStateToProps = (state: any) => ({
+  events: state.onboarding.events,
+  isDataCollectionForMarketingEnabled:
+    state.security.dataCollectionForMarketing,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  clearOnboardingEvents: () => dispatch(clearOnboardingEvents()),
+  setDataCollectionForMarketing: (value: boolean) =>
+    dispatch(setDataCollectionForMarketing(value)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type OptinMetricsProps = PropsFromRedux & OptinMetricsOwnProps;
+
 /**
  * View that is displayed in the flow to agree to metrics
  */
-class OptinMetrics extends PureComponent {
-  static propTypes = {
-    isDataCollectionForMarketingEnabled: PropTypes.bool,
-    setDataCollectionForMarketing: PropTypes.func,
-    /**
-    /* navigation object required to push and pop other views
-    */
-    navigation: PropTypes.object,
-    /**
-     * Onboarding events array created in previous onboarding views
-     */
-    events: PropTypes.array,
-    /**
-     * Action to erase any event stored in onboarding state
-     */
-    clearOnboardingEvents: PropTypes.func,
-    /**
-     * Object that represents the current route info like params passed to it
-     */
-    route: PropTypes.object,
-    /**
-     * Metrics injected by withMetricsAwareness HOC
-     */
-    metrics: PropTypes.object,
-  };
+class OptinMetrics extends PureComponent<OptinMetricsProps, OptinMetricsState> {
+  static contextType = ThemeContext;
+  declare context: React.ContextType<typeof ThemeContext>;
 
-  state = {
+  state: OptinMetricsState = {
     /**
      * Tracks the scroll view's content height.
      */
@@ -194,7 +207,7 @@ class OptinMetrics extends PureComponent {
     BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
   }
 
-  componentDidUpdate(_, prevState) {
+  componentDidUpdate(_: OptinMetricsProps, prevState: OptinMetricsState) {
     const { scrollViewContentHeight, isEndReached, scrollViewHeight } =
       this.state;
 
@@ -249,7 +262,7 @@ class OptinMetrics extends PureComponent {
    * @param {object} - Object containing action and description to be rendered
    * @param {number} i - Index key
    */
-  renderLegacyAction = ({ action, description, prefix }, i) => {
+  renderLegacyAction = ({ action, description, prefix }: any, i: number) => {
     const styles = this.getStyles();
 
     return (
@@ -279,7 +292,7 @@ class OptinMetrics extends PureComponent {
     );
   };
 
-  renderAction = ({ description, prefix }, i) => {
+  renderAction = ({ description, prefix }: any, i: number) => {
     const styles = this.getStyles();
 
     return (
@@ -413,7 +426,7 @@ class OptinMetrics extends PureComponent {
    * @param {string} linkParams.url
    * @param {string} linkParams.title
    */
-  onPressLink = (linkParams) => {
+  onPressLink = (linkParams: { url: string; title: string }) => {
     this.props.navigation.navigate('Webview', {
       screen: 'SimpleWebview',
       params: linkParams,
@@ -532,7 +545,7 @@ class OptinMetrics extends PureComponent {
    * @param {number} _
    * @param {number} height
    */
-  onContentSizeChange = (_, height) =>
+  onContentSizeChange = (_: number, height: number) =>
     this.setState({ scrollViewContentHeight: height });
 
   /**
@@ -540,7 +553,7 @@ class OptinMetrics extends PureComponent {
    *
    * @param {Object} event
    */
-  onLayout = ({ nativeEvent }) => {
+  onLayout = ({ nativeEvent }: LayoutChangeEvent) => {
     const scrollViewHeight = nativeEvent.layout.height;
     this.setState({ scrollViewHeight });
   };
@@ -550,7 +563,7 @@ class OptinMetrics extends PureComponent {
    *
    * @param {Object} event
    */
-  onScroll = ({ nativeEvent }) => {
+  onScroll = ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
     const currentYOffset = nativeEvent.contentOffset.y;
     const paddingAllowance = Platform.select({
       ios: 16,
@@ -648,26 +661,10 @@ class OptinMetrics extends PureComponent {
       </SafeAreaView>
     );
   }
+
+  static navigationOptions = {
+    headerShown: false,
+  };
 }
 
-OptinMetrics.contextType = ThemeContext;
-OptinMetrics.navigationOptions = {
-  headerShown: false,
-};
-
-const mapStateToProps = (state) => ({
-  events: state.onboarding.events,
-  isDataCollectionForMarketingEnabled:
-    state.security.dataCollectionForMarketing,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  clearOnboardingEvents: () => dispatch(clearOnboardingEvents()),
-  setDataCollectionForMarketing: (value) =>
-    dispatch(setDataCollectionForMarketing(value)),
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withMetricsAwareness(OptinMetrics));
+export default connector(withMetricsAwareness(OptinMetrics));
