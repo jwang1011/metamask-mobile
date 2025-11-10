@@ -6,7 +6,6 @@ import React, {
   useContext,
   useMemo,
 } from 'react';
-import PropTypes from 'prop-types';
 import {
   Alert,
   View,
@@ -102,20 +101,29 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import SrpInput from '../SrpInput';
 
-const checkValidSeedWord = (text) => wordlist.includes(text);
+const checkValidSeedWord = (text: string) => wordlist.includes(text);
 
 // Custom masking function to replace characters with dots (avoids iOS ellipsis)
-const maskText = (text) => {
+const maskText = (text: string) => {
   if (!text) return '';
   return '••••';
 };
+
+interface ImportFromSecretRecoveryPhraseProps {
+  navigation: any;
+  passwordSet: () => void;
+  setLockTime: (time: number) => void;
+  seedphraseBackedUp: () => void;
+  saveOnboardingEvent: (...eventArgs: any[]) => void;
+  route: any;
+}
 
 /**
  * View where users can set restore their account
  * using a secret recovery phrase (SRP)
  * The SRP was formally called the seed phrase
  */
-const ImportFromSecretRecoveryPhrase = ({
+const ImportFromSecretRecoveryPhrase: React.FC<ImportFromSecretRecoveryPhraseProps> = ({
   navigation,
   passwordSet,
   setLockTime,
@@ -126,8 +134,8 @@ const ImportFromSecretRecoveryPhrase = ({
   const { colors, themeAppearance } = useTheme();
   const styles = createStyles(colors);
 
-  const seedPhraseInputRefs = useRef(null);
-  const confirmPasswordInput = useRef();
+  const seedPhraseInputRefs = useRef<Map<number, any> | null>(null);
+  const confirmPasswordInput = useRef<any>();
 
   function getSeedPhraseInputRef() {
     if (!seedPhraseInputRefs.current) {
@@ -137,26 +145,26 @@ const ImportFromSecretRecoveryPhrase = ({
   }
 
   const { toastRef } = useContext(ToastContext);
-  const passwordSetupAttemptTraceCtxRef = useRef(null);
+  const passwordSetupAttemptTraceCtxRef = useRef<any>(null);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordStrength, setPasswordStrength] = useState();
-  const [biometryType, setBiometryType] = useState(null);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [biometryChoice, setBiometryChoice] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [hideSeedPhraseInput, setHideSeedPhraseInput] = useState(true);
-  const [seedPhrase, setSeedPhrase] = useState(['']);
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [passwordStrength, setPasswordStrength] = useState<number | undefined>();
+  const [biometryType, setBiometryType] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState<boolean>(false);
+  const [biometryChoice, setBiometryChoice] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [hideSeedPhraseInput, setHideSeedPhraseInput] = useState<boolean>(true);
+  const [seedPhrase, setSeedPhrase] = useState<string[]>(['']);
   const [seedPhraseInputFocusedIndex, setSeedPhraseInputFocusedIndex] =
-    useState(null);
+    useState<number | null>(null);
   const [nextSeedPhraseInputFocusedIndex, setNextSeedPhraseInputFocusedIndex] =
-    useState(null);
-  const [showAllSeedPhrase, setShowAllSeedPhrase] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [learnMore, setLearnMore] = useState(false);
-  const [showPasswordIndex, setShowPasswordIndex] = useState([0, 1]);
+    useState<number | null>(null);
+  const [showAllSeedPhrase, setShowAllSeedPhrase] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [learnMore, setLearnMore] = useState<boolean>(false);
+  const [showPasswordIndex, setShowPasswordIndex] = useState<number[]>([0, 1]);
 
   const { fetchAccountsWithActivity } = useAccountsWithNetworkActivitySync({
     onFirstLoad: false,
@@ -170,13 +178,13 @@ const ImportFromSecretRecoveryPhrase = ({
 
   const { isEnabled: isMetricsEnabled } = useMetrics();
 
-  const track = (event, properties) => {
+  const track = (event: any, properties: any) => {
     const eventBuilder = MetricsEventBuilder.createEventBuilder(event);
     eventBuilder.addProperties(properties);
     trackOnboarding(eventBuilder.build(), saveOnboardingEvent);
   };
 
-  const [errorWordIndexes, setErrorWordIndexes] = useState({});
+  const [errorWordIndexes, setErrorWordIndexes] = useState<Record<number, boolean>>({});
 
   const handleClear = useCallback(() => {
     setSeedPhrase(['']);
@@ -188,7 +196,7 @@ const ImportFromSecretRecoveryPhrase = ({
   }, []);
 
   const handleSeedPhraseChangeAtIndex = useCallback(
-    (seedPhraseText, index) => {
+    (seedPhraseText: string, index: number) => {
       try {
         const text = formatSeedPhraseToSingleLine(seedPhraseText);
 
@@ -250,7 +258,7 @@ const ImportFromSecretRecoveryPhrase = ({
   );
 
   const handleSeedPhraseChange = useCallback(
-    (seedPhraseText) => {
+    (seedPhraseText: string) => {
       const text = formatSeedPhraseToSingleLine(seedPhraseText);
       const trimmedText = text.trim();
       const updatedTrimmedText = trimmedText
@@ -277,7 +285,7 @@ const ImportFromSecretRecoveryPhrase = ({
   );
 
   const checkForWordErrors = useCallback(
-    (seedPhraseArr) => {
+    (seedPhraseArr: string[]) => {
       const errorsMap = {};
       seedPhraseArr.forEach((word, index) => {
         // Trim the word for validation but keep the original for cursor position
@@ -430,7 +438,7 @@ const ImportFromSecretRecoveryPhrase = ({
     [],
   );
 
-  const updateBiometryChoice = async (biometryChoice) => {
+  const updateBiometryChoice = async (biometryChoice: boolean) => {
     await updateAuthTypeStorageFlags(biometryChoice);
     setBiometryChoice(biometryChoice);
   };
@@ -439,7 +447,7 @@ const ImportFromSecretRecoveryPhrase = ({
    * This function handles the case when the user rejects the OS prompt for allowing use of biometrics.
    * If this occurs we will create the wallet automatically with password as the login method
    */
-  const handleRejectedOsBiometricPrompt = async (parsedSeed) => {
+  const handleRejectedOsBiometricPrompt = async (parsedSeed: string) => {
     const newAuthData = await Authentication.componentAuthenticationType(
       false,
       false,
@@ -458,7 +466,7 @@ const ImportFromSecretRecoveryPhrase = ({
     updateBiometryChoice(false);
   };
 
-  const onPasswordChange = (value) => {
+  const onPasswordChange = (value: string) => {
     const passInfo = zxcvbn(value);
 
     setPassword(value);
@@ -468,7 +476,7 @@ const ImportFromSecretRecoveryPhrase = ({
     }
   };
 
-  const onPasswordConfirmChange = (value) => {
+  const onPasswordConfirmChange = (value: string) => {
     setConfirmPassword(value);
   };
 
@@ -560,7 +568,7 @@ const ImportFromSecretRecoveryPhrase = ({
     [password, confirmPassword, learnMore],
   );
 
-  const toggleShowPassword = (index) => {
+  const toggleShowPassword = (index: number) => {
     setShowPasswordIndex((prev) => {
       if (prev.includes(index)) {
         return prev.filter((item) => item !== index);
@@ -1165,44 +1173,11 @@ const ImportFromSecretRecoveryPhrase = ({
   );
 };
 
-ImportFromSecretRecoveryPhrase.propTypes = {
-  /**
-   * The navigator object
-   */
-  navigation: PropTypes.object,
-  /**
-   * The action to update the password set flag
-   * in the redux store
-   */
-  passwordSet: PropTypes.func,
-  /**
-   * The action to set the locktime
-   * in the redux store
-   */
-  setLockTime: PropTypes.func,
-  /**
-   * The action to update the seedphrase backed up flag
-   * in the redux store
-   */
-  seedphraseBackedUp: PropTypes.func,
-  /**
-   * Action to save onboarding event
-   */
-  saveOnboardingEvent: PropTypes.func,
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-  /**
-   * Action to save onboarding event
-   */
-};
-
-const mapDispatchToProps = (dispatch) => ({
-  setLockTime: (time) => dispatch(setLockTime(time)),
+const mapDispatchToProps = (dispatch: any) => ({
+  setLockTime: (time: number) => dispatch(setLockTime(time)),
   passwordSet: () => dispatch(passwordSet()),
   seedphraseBackedUp: () => dispatch(seedphraseBackedUp()),
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
 });
 
 export default connect(
