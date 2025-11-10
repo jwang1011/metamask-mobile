@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, SafeAreaView, View } from 'react-native';
 import Modal from 'react-native-modal';
 import FAIcon from 'react-native-vector-icons/FontAwesome5';
@@ -11,7 +10,20 @@ import StyledButton from '../../StyledButton';
 import { strings } from '../../../../../locales/i18n';
 import { useTheme } from '../../../../util/theme';
 
-const createStyles = (colors) =>
+interface TokenImportModalProps {
+  isVisible?: boolean;
+  dismiss?: () => void;
+  token: {
+    address: string;
+    name?: string;
+    symbol: string;
+    decimals?: number;
+    iconUrl?: string;
+  };
+  onPressImport?: () => void;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     modal: {
       margin: 0,
@@ -56,7 +68,7 @@ const createStyles = (colors) =>
     },
   });
 
-function TokenImportModal({ isVisible, dismiss, token, onPressImport }) {
+const TokenImportModal: React.FC<TokenImportModalProps> = ({ isVisible, dismiss, token, onPressImport }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -116,18 +128,6 @@ function TokenImportModal({ isVisible, dismiss, token, onPressImport }) {
       </SafeAreaView>
     </Modal>
   );
-}
-
-TokenImportModal.propTypes = {
-  isVisible: PropTypes.bool,
-  dismiss: PropTypes.func,
-  token: PropTypes.shape({
-    address: PropTypes.string,
-    name: PropTypes.string,
-    symbol: PropTypes.string,
-    decimals: PropTypes.number,
-    iconUrl: PropTypes.string,
-  }),
-  onPressImport: PropTypes.func,
 };
+
 export default TokenImportModal;

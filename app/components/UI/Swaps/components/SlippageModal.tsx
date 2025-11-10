@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { StyleSheet, SafeAreaView, View } from 'react-native';
 import Modal from 'react-native-modal';
 
@@ -9,7 +8,14 @@ import SlippageSlider from '../../SlippageSlider';
 import { strings } from '../../../../../locales/i18n';
 import { useTheme } from '../../../../util/theme';
 
-const createStyles = (colors) =>
+interface SlippageModalProps {
+  isVisible?: boolean;
+  dismiss?: () => void;
+  onChange: (value: number) => void;
+  slippage: number;
+}
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     modal: {
       margin: 0,
@@ -38,7 +44,7 @@ const createStyles = (colors) =>
     },
   });
 
-function SlippageModal({ isVisible, dismiss, onChange, slippage }) {
+const SlippageModal: React.FC<SlippageModalProps> = ({ isVisible, dismiss, onChange, slippage }) => {
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -85,12 +91,6 @@ function SlippageModal({ isVisible, dismiss, onChange, slippage }) {
       </SafeAreaView>
     </Modal>
   );
-}
-
-SlippageModal.propTypes = {
-  isVisible: PropTypes.bool,
-  dismiss: PropTypes.func,
-  onChange: PropTypes.func,
-  slippage: PropTypes.number,
 };
+
 export default SlippageModal;
