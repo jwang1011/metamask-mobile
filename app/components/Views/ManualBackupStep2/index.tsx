@@ -8,11 +8,10 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import ActionView from '../../UI/ActionView';
 import { ScreenshotDeterrent } from '../../UI/ScreenshotDeterrent';
 import { strings } from '../../../../locales/i18n';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { seedphraseBackedUp } from '../../../actions/user';
 import { saveOnboardingEvent as saveEvent } from '../../../actions/onboarding';
 import { getOnboardingNavbarOptions } from '../../UI/Navbar';
@@ -37,7 +36,28 @@ import { CommonActions } from '@react-navigation/native';
 import { ONBOARDING_SUCCESS_FLOW } from '../../../constants/onboarding';
 import { TraceName, endTrace } from '../../../util/trace';
 
-const ManualBackupStep2 = ({
+interface ManualBackupStep2OwnProps {
+  navigation: any;
+  route: {
+    params?: {
+      words?: string[];
+      backupFlow?: boolean;
+      settingsBackup?: boolean;
+    };
+  };
+}
+
+const mapDispatchToProps = (dispatch: any) => ({
+  seedphraseBackedUp: () => dispatch(seedphraseBackedUp()),
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+});
+
+const connector = connect(null, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ManualBackupStep2Props = PropsFromRedux & ManualBackupStep2OwnProps;
+
+const ManualBackupStep2: React.FC<ManualBackupStep2Props> = ({
   navigation,
   seedphraseBackedUp,
   route,
@@ -50,12 +70,12 @@ const ManualBackupStep2 = ({
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
-  const [gridWords, setGridWords] = useState([]);
-  const [emptySlots, setEmptySlots] = useState([]);
-  const [missingWords, setMissingWords] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [usedWordIndices, setUsedWordIndices] = useState(new Set());
-  const [wordPositionMap, setWordPositionMap] = useState({});
+  const [gridWords, setGridWords] = useState<string[]>([]);
+  const [emptySlots, setEmptySlots] = useState<number[]>([]);
+  const [missingWords, setMissingWords] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [usedWordIndices, setUsedWordIndices] = useState<Set<number>>(new Set());
+  const [wordPositionMap, setWordPositionMap] = useState<{ [key: number]: number }>({});
 
   const headerLeft = useCallback(
     () => (
@@ -197,7 +217,7 @@ const ManualBackupStep2 = ({
   }, [generateMissingWords]);
 
   const handleWordSelect = useCallback(
-    (word, wordIndex) => {
+    (word: string, wordIndex: number) => {
       const updatedGrid = [...gridWords];
 
       // Check if this specific word index is already used
@@ -279,7 +299,7 @@ const ManualBackupStep2 = ({
   );
 
   const handleSlotPress = useCallback(
-    (index) => {
+    (index: number) => {
       if (!emptySlots.includes(index)) return;
 
       const isFilled = gridWords[index] !== '';
@@ -314,7 +334,7 @@ const ManualBackupStep2 = ({
   const innerWidth = Dimensions.get('window').width;
 
   const renderGridItemText = useCallback(
-    (item, index, isEmpty) => (
+    (item: string, index: number, isEmpty: boolean) => (
       <>
         <Text style={styles.gridItemIndex}>{index + 1}.</Text>
         <Text
@@ -334,7 +354,7 @@ const ManualBackupStep2 = ({
   );
 
   const renderGridItem = useCallback(
-    ({ item, index }) => {
+    ({ item, index }: { item: string; index: number }) => {
       const isEmpty = emptySlots.includes(index);
       const isSelected = selectedSlot === index;
 
@@ -511,29 +531,4 @@ const ManualBackupStep2 = ({
   );
 };
 
-ManualBackupStep2.propTypes = {
-  /**
-  /* navigation object required to push and pop other views
-  */
-  navigation: PropTypes.object,
-  /**
-   * The action to update the seedphrase backed up flag
-   * in the redux store
-   */
-  seedphraseBackedUp: PropTypes.func,
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-  /**
-   * Action to save onboarding event
-   */
-  saveOnboardingEvent: PropTypes.func,
-};
-
-const mapDispatchToProps = (dispatch) => ({
-  seedphraseBackedUp: () => dispatch(seedphraseBackedUp()),
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-});
-
-export default connect(null, mapDispatchToProps)(ManualBackupStep2);
+export default connector(ManualBackupStep2);
