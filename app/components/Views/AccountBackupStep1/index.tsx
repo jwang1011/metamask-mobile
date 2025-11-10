@@ -9,14 +9,13 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import PropTypes from 'prop-types';
 import { fontStyles } from '../../../styles/common';
 import { strings } from '../../../../locales/i18n';
 import AndroidBackHandler from '../AndroidBackHandler';
 import Device from '../../../util/device';
 import scaling from '../../../util/scaling';
 import Engine from '../../../core/Engine';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { saveOnboardingEvent as saveEvent } from '../../../actions/onboarding';
 import { MetaMetricsEvents } from '../../../core/Analytics';
 import StorageWrapper from '../../../store/storage-wrapper';
@@ -42,7 +41,22 @@ import { ONBOARDING_SUCCESS_FLOW } from '../../../constants/onboarding';
 import { TraceName, endTrace } from '../../../util/trace';
 import { AppThemeKey } from '../../../util/theme/models';
 
-const createStyles = (colors) =>
+interface AccountBackupStep1OwnProps {
+  route: {
+    params?: any;
+  };
+}
+
+const mapDispatchToProps = (dispatch: any) => ({
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+});
+
+const connector = connect(null, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type AccountBackupStep1Props = PropsFromRedux & AccountBackupStep1OwnProps;
+
+const createStyles = (colors: any) =>
   StyleSheet.create({
     mainWrapper: {
       backgroundColor: colors.background.default,
@@ -106,13 +120,13 @@ const createStyles = (colors) =>
  * View that's shown during the first step of
  * the backup seed phrase flow
  */
-const AccountBackupStep1 = (props) => {
+const AccountBackupStep1: React.FC<AccountBackupStep1Props> = (props) => {
   const [hasFunds, setHasFunds] = useState(false);
   const { colors, themeAppearance } = useTheme();
   const styles = createStyles(colors);
   const { isEnabled: isMetricsEnabled } = useMetrics();
 
-  const track = (event, properties) => {
+  const track = (event: any, properties?: any) => {
     const eventBuilder = MetricsEventBuilder.createEventBuilder(event);
     eventBuilder.addProperties(properties);
     trackOnboarding(eventBuilder.build(), props.saveOnboardingEvent);
@@ -282,19 +296,4 @@ const AccountBackupStep1 = (props) => {
   );
 };
 
-AccountBackupStep1.propTypes = {
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-  /**
-   * Action to save onboarding event
-   */
-  saveOnboardingEvent: PropTypes.func,
-};
-
-const mapDispatchToProps = (dispatch) => ({
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-});
-
-export default connect(null, mapDispatchToProps)(AccountBackupStep1);
+export default connector(AccountBackupStep1);

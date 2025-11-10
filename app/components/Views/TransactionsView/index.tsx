@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import PropTypes from 'prop-types';
-import { connect, useSelector } from 'react-redux';
+import { connect, useSelector, ConnectedProps } from 'react-redux';
 import { KnownCaipNamespace } from '@metamask/utils';
 import { withNavigation } from '@react-navigation/compat';
 import { showAlert } from '../../../actions/alert';
@@ -48,13 +47,63 @@ import { isRemoveGlobalNetworkSelectorEnabled } from '../../../util/networks';
 import useCurrencyRatePolling from '../../hooks/AssetPolling/useCurrencyRatePolling';
 import useTokenRatesPolling from '../../hooks/AssetPolling/useTokenRatesPolling';
 
+interface TransactionsViewOwnProps {
+  navigation: any;
+}
+
+const mapStateToProps = (state: any) => {
+  const chainId = selectChainId(state);
+  const selectedInternalAccount = selectSelectedInternalAccount(state);
+  const evmTransactions = selectSortedTransactions(state);
+
+  ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
+  let allTransactions = evmTransactions;
+  if (
+    selectedInternalAccount &&
+    !isEvmAccountType(selectedInternalAccount.type)
+  ) {
+    const nonEVMTransactions = selectNonEvmTransactions(state);
+    const txs = nonEVMTransactions?.transactions || [];
+
+    allTransactions = [...evmTransactions, ...txs].sort(
+      (a, b) => (b?.time ?? 0) - (a?.time ?? 0),
+    );
+  }
+  ///: END:ONLY_INCLUDE_IF
+
+  return {
+    conversionRate: selectConversionRate(state),
+    currentCurrency: selectCurrentCurrency(state),
+    tokens: selectTokens(state),
+    selectedInternalAccount,
+    transactions: allTransactions,
+    networkType: selectProviderType(state),
+    chainId,
+    tokenNetworkFilter: isRemoveGlobalNetworkSelectorEnabled()
+      ? selectEVMEnabledNetworks(state).reduce(
+          (acc: any, network: any) => ({ ...acc, [network]: true }),
+          {},
+        )
+      : selectTokenNetworkFilter(state),
+  };
+};
+
+const mapDispatchToProps = (dispatch: any) => ({
+  showAlert: (config: any) => dispatch(showAlert(config)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type TransactionsViewProps = PropsFromRedux & TransactionsViewOwnProps;
+
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
   },
 });
 
-const TransactionsView = ({
+const TransactionsView: React.FC<TransactionsViewProps> = ({
   navigation,
   conversionRate,
   selectedInternalAccount,
@@ -84,7 +133,7 @@ const TransactionsView = ({
   const isPopularNetwork = useSelector(selectIsPopularNetwork);
 
   const filterTransactions = useCallback(
-    (networkId) => {
+    (networkId: string) => {
       let accountAddedTimeInsertPointFound = false;
       const addedAccountTime = selectedInternalAccount?.metadata.importTime;
 
@@ -229,87 +278,4 @@ const TransactionsView = ({
   );
 };
 
-TransactionsView.propTypes = {
-  /**
-   * ETH to current currency conversion rate
-   */
-  conversionRate: PropTypes.number,
-  /**
-   * Currency code of the currently-active currency
-   */
-  currentCurrency: PropTypes.string,
-  /**
-   * InternalAccount object required to get account name, address and import time
-   */
-  selectedInternalAccount: PropTypes.object,
-  /**
-   * navigation object required to push new views
-   */
-  navigation: PropTypes.object,
-  /**
-   * An array that represents the user transactions
-   */
-  transactions: PropTypes.array,
-  /**
-   * A string represeting the network name
-   */
-  networkType: PropTypes.string,
-  /**
-   * Array of ERC20 assets
-   */
-  tokens: PropTypes.array,
-  /**
-   * Current chainId
-   */
-  chainId: PropTypes.string,
-  /**
-   * Array of network tokens filter
-   */
-  tokenNetworkFilter: PropTypes.object,
-};
-
-const mapStateToProps = (state) => {
-  const chainId = selectChainId(state);
-  const selectedInternalAccount = selectSelectedInternalAccount(state);
-  const evmTransactions = selectSortedTransactions(state);
-
-  ///: BEGIN:ONLY_INCLUDE_IF(keyring-snaps)
-  let allTransactions = evmTransactions;
-  if (
-    selectedInternalAccount &&
-    !isEvmAccountType(selectedInternalAccount.type)
-  ) {
-    const nonEVMTransactions = selectNonEvmTransactions(state);
-    const txs = nonEVMTransactions?.transactions || [];
-
-    allTransactions = [...evmTransactions, ...txs].sort(
-      (a, b) => (b?.time ?? 0) - (a?.time ?? 0),
-    );
-  }
-  ///: END:ONLY_INCLUDE_IF
-
-  return {
-    conversionRate: selectConversionRate(state),
-    currentCurrency: selectCurrentCurrency(state),
-    tokens: selectTokens(state),
-    selectedInternalAccount,
-    transactions: allTransactions,
-    networkType: selectProviderType(state),
-    chainId,
-    tokenNetworkFilter: isRemoveGlobalNetworkSelectorEnabled()
-      ? selectEVMEnabledNetworks(state).reduce(
-          (acc, network) => ({ ...acc, [network]: true }),
-          {},
-        )
-      : selectTokenNetworkFilter(state),
-  };
-};
-
-const mapDispatchToProps = (dispatch) => ({
-  showAlert: (config) => dispatch(showAlert(config)),
-});
-
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withNavigation(TransactionsView));
+export default connector(withNavigation(TransactionsView));
