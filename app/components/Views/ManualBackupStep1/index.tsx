@@ -8,8 +8,7 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Icon, {
   IconName,
@@ -53,11 +52,36 @@ import Routes from '../../../constants/navigation/Routes';
 import { saveOnboardingEvent as saveEvent } from '../../../actions/onboarding';
 import { AppThemeKey } from '../../../util/theme/models';
 
+interface ManualBackupStep1OwnProps {
+  navigation: any;
+  route: {
+    params?: {
+      backupFlow?: boolean;
+      settingsBackup?: boolean;
+      seedPhrase?: string[];
+      words?: string[];
+    };
+  };
+}
+
+const mapStateToProps = (state: any) => ({
+  appTheme: state.user.appTheme,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  saveOnboardingEvent: (...eventArgs: any[]) => dispatch(saveEvent(eventArgs)),
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type PropsFromRedux = ConnectedProps<typeof connector>;
+type ManualBackupStep1Props = PropsFromRedux & ManualBackupStep1OwnProps;
+
 /**
  * View that's shown during the second step of
  * the backup seed phrase flow
  */
-const ManualBackupStep1 = ({
+const ManualBackupStep1: React.FC<ManualBackupStep1Props> = ({
   route,
   navigation,
   appTheme,
@@ -93,7 +117,7 @@ const ManualBackupStep1 = ({
     ),
     [colors, navigation, styles.headerLeft],
   );
-  const track = (event, properties) => {
+  const track = (event: any, properties?: any) => {
     const eventBuilder = MetricsEventBuilder.createEventBuilder(event);
     eventBuilder.addProperties(properties);
     trackOnboarding(eventBuilder.build(), saveOnboardingEvent);
@@ -112,7 +136,7 @@ const ManualBackupStep1 = ({
     );
   }, [colors, navigation, route, headerLeft]);
 
-  const tryExportSeedPhrase = async (password) => {
+  const tryExportSeedPhrase = async (password: string) => {
     const { KeyringController } = Engine.context;
     const uint8ArrayMnemonic = await KeyringController.exportSeedPhrase(
       password,
@@ -164,7 +188,7 @@ const ManualBackupStep1 = ({
     updateNavBar();
   }, [updateNavBar]);
 
-  const onPasswordChange = (password) => {
+  const onPasswordChange = (password: string) => {
     setPassword(password);
   };
 
@@ -182,7 +206,7 @@ const ManualBackupStep1 = ({
     track(MetaMetricsEvents.WALLET_SECURITY_PHRASE_REVEALED, {});
   };
 
-  const tryUnlockWithPassword = async (password) => {
+  const tryUnlockWithPassword = async (password: string) => {
     setReady(false);
     try {
       const seedPhrase = await tryExportSeedPhrase(password);
@@ -389,31 +413,4 @@ const ManualBackupStep1 = ({
   );
 };
 
-ManualBackupStep1.propTypes = {
-  /**
-  /* navigation object required to push and pop other views
-  */
-  navigation: PropTypes.object,
-  /**
-   * Object that represents the current route info like params passed to it
-   */
-  route: PropTypes.object,
-  /**
-   * Theme that app is set to
-   */
-  appTheme: PropTypes.string,
-  /**
-   * Action to save onboarding event
-   */
-  saveOnboardingEvent: PropTypes.func,
-};
-
-const mapStateToProps = (state) => ({
-  appTheme: state.user.appTheme,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  saveOnboardingEvent: (...eventArgs) => dispatch(saveEvent(eventArgs)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ManualBackupStep1);
+export default connector(ManualBackupStep1);
